@@ -7,6 +7,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="$SCRIPT_DIR/results/yaml"
 PLOTS_DIR="$SCRIPT_DIR/results/plots"
 
+mkdir -p "$OUTPUT_DIR" "$PLOTS_DIR"
+
 # Safely deleting runs
 ALLOWED_DELETE_DIR="$SCRIPT_DIR/results/yaml"
 
