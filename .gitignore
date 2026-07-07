@@ -1,0 +1,7 @@
+.env
+
+# Output directories
+results/yaml/*
+results/plots/*
+
+TODO.md
