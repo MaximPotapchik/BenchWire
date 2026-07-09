@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e 
+set -e
 
 # default vars
 BENCHMODE="single"
@@ -7,32 +7,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="$SCRIPT_DIR/results/yaml"
 PLOTS_DIR="$SCRIPT_DIR/results/plots"
 
-mkdir -p "$OUTPUT_DIR" "$PLOTS_DIR"
-
-# Safely deleting runs
+# add allowed to delete directories here.
 ALLOWED_DELETE_DIR="$SCRIPT_DIR/results/yaml"
+. "$SCRIPT_DIR/lib/cli/safe_rm.sh"
 
-safe_rm() {
-    local TARGET="$1"
-    
-    if [[ -z "${TARGET// }" ]]; then
-        echo "safe_rm: BLOCKED -- empty path" >&2
-        return 1
-    fi
-    
-    local ABS_TARGET="$(realpath "$TARGET" 2>/dev/null)"
-    if [[ -z "$ABS_TARGET" ]]; then
-        echo "safe_rm: cannot resolve path: $TARGET" >&2
-        return 1
-    fi
-    
-    if [[ "$ABS_TARGET" != "$ALLOWED_DELETE_DIR/"* && "$ABS_TARGET" != "$ALLOWED_DELETE_DIR" ]]; then
-        echo "safe_rm: BLOCKED -- $TARGET is not inside $ALLOWED_DELETE_DIR" >&2
-        return 1
-    fi
-    
-    rm -rf "$ABS_TARGET"
-}
+mkdir -p "$OUTPUT_DIR" "$PLOTS_DIR"
 
 # --mode parse
 while [[ $# -gt 0 ]]; do 
@@ -73,13 +52,8 @@ fi
 
 # option 1 | Use .env
 if [[ "$UsingEnv" == true ]]; then
-    if [[ ! -f "$SCRIPT_DIR/.env" ]]; then
-        echo "No .env found. Copy .env.example to .env and fill it in first." >&2
-        exit 1
-    fi
-    set -a
-    source "$SCRIPT_DIR/.env"
-    set +a
+    . "$SCRIPT_DIR/lib/cli/load_env.sh" 
+    load_env
 fi
 
 for FILE in "$ALLOWED_DELETE_DIR"/*; do
@@ -87,14 +61,11 @@ for FILE in "$ALLOWED_DELETE_DIR"/*; do
 done
 
 # sleep/cooldown function
-msleep() {
-    local Ms=${COOLDOWNTIMER:-500}
-    local Sec=$((Ms / 1000))
-    local Rem=$((Ms % 1000))
-    sleep "$(printf "%d.%03d" "$Sec" "$Rem")"
-}
+. "$SCRIPT_DIR/lib/cli/msleep.sh"
 
-# TODO: gate the exegesis mode at the start so that it can do latency + uop.
+# TODO: - Gate the exegesis mode at the start so that it can do latency + uop.
+# - Add a/b/b/a mode.
+# - Every runner should be a function.
 if [[ "$UsingEnv" == true ]]; then
 
     if [[ "$BENCHMODE" == "single" ]]; then
