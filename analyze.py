@@ -6,23 +6,24 @@ import argparse
 from enum import Enum
 from datetime import datetime
 
-
-class MODE(Enum):
+"""
+class METHODOLOGY(Enum):
     SINGLE = "single"
-    COMPARE = "compare"
+    SEQUENTIAL = "sequential"
+    CYCLING = "cycling"
+    RANDOMINTERLEAVING = "random interleaving"
+"""
 
 # cli parser
 parser = argparse.ArgumentParser(description="Python CLI parser")
-parser.add_argument("benchmode", type=str, choices=[m.value for m in MODE])
-parser.add_argument("runs", type=int)
-parser.add_argument("labels", type=str)
 parser.add_argument("methodology", type=str)
+parser.add_argument("runs", type=int)
 parser.add_argument("cooldowntimer", type=int)
+parser.add_argument("labels", type=str)
 
 args = parser.parse_args()
-BenchMode = args.benchmode
-Runs = args.runs
 Methodology = args.methodology
+Runs = args.runs
 CooldownTimer = args.cooldowntimer
 
 if "|" in args.labels:
@@ -32,7 +33,7 @@ elif args.labels != "":
 else:
     Labels = ""
 
-if BenchMode == MODE.COMPARE.value and (not isinstance(Labels, list) or len(Labels) != 2):
+if Methodology != "single" and (not isinstance(Labels, list) or len(Labels) != 2):
     parser.error("compare mode needs two labels separated by '|', e.g. \"Raw|Libpfm\"")
 
 ExegesisMode = "Latency"
@@ -64,7 +65,7 @@ mocha = {
 }
 
 # plot - Yes it is a lot of styling
-if BenchMode == "single":
+if Methodology == "single":
     RunCount = np.arange(1, Runs + 1)
     ValueArr = CollectValues("", Runs)
     plt.figure(facecolor=mocha["base"])
@@ -80,7 +81,7 @@ if BenchMode == "single":
     plt.ylabel("Cycles")
     plt.legend()
 
-if BenchMode == "compare":
+if Methodology != "single":
     RunCount = np.arange(1, Runs + 1)
     ValueArrA = CollectValues("A", Runs)
     ValueArrB = CollectValues("B", Runs)
@@ -105,10 +106,10 @@ CurTime = Time.strftime("%d_%H%M%S")
 plt.savefig(f"{OutputDir}/plot{CurTime}.png", dpi=300)
 
 with open(f"{OutputDir}/result{CurTime}.md", "w") as f:
-    f.write(f"## {ExegesisMode} | Mode - {BenchMode} \n\n")
+    f.write(f"## {ExegesisMode} | Methodology - {Methodology} \n\n")
     f.write(f"[plt](plot{CurTime}.png)\n\n")
-    if BenchMode == "single":
-        f.write(f"## Statistics\n\n")
+    if Methodology == "single":
+        f.write("## Statistics\n\n")
         f.write(f"{Runs} Runs | Cooldown time - {CooldownTimer}ms\n")
         f.write(f"Mean: {ValueArr.mean():.4f}\n")
         f.write(f"Median: {np.median(ValueArr):.4f}\n")
@@ -116,16 +117,16 @@ with open(f"{OutputDir}/result{CurTime}.md", "w") as f:
         f.write(f"Coefficient of Variation: {ValueArr.std() / ValueArr.mean() * 100:.4f}%\n")
         f.write(f"Min: {ValueArr.min():.4f}\n")
         f.write(f"Max: {ValueArr.max():.4f}\n\n")
-        f.write(f"Percentile statistics\n")
+        f.write("Percentile statistics\n")
         f.write(f"P50: {np.percentile(ValueArr, 50):.4f}\n")
         f.write(f"P75: {np.percentile(ValueArr, 75):.4f}\n")
         f.write(f"P90: {np.percentile(ValueArr, 90):.4f}\n")
         f.write(f"P99: {np.percentile(ValueArr, 99):.4f}\n")
         f.write(f"P99.9: {np.percentile(ValueArr, 99.9):.4f}\n")
-    if BenchMode == "compare":
-        f.write(f"## Statistics\n\n")
+    if Methodology != "single":
+        f.write("## Statistics\n\n")
         f.write(f"A. {Labels[0]} B. {Labels[1]}\n\n")
-        f.write(f"Methodology - {Methodology} | {Runs} Runs | Cooldown time - {CooldownTimer}ms\n\n")
+        f.write(f"{Runs} Runs | Cooldown time - {CooldownTimer}ms\n\n")
         f.write(f"Mean | A: {ValueArrA.mean():.4f} B: {ValueArrB.mean():.4f}\n")
         MeanDiff = ValueArrB.mean() - ValueArrA.mean()
         MeanDiffPct = abs(MeanDiff) / ((ValueArrA.mean() + ValueArrB.mean()) / 2) * 100
@@ -146,7 +147,7 @@ with open(f"{OutputDir}/result{CurTime}.md", "w") as f:
         f.write(f"CoV Difference: {CvDiffPct:.4f}% ({Labels[1] if CvDiff > 0 else Labels[0]} higher)\n\n")
         f.write(f"Min | A: {ValueArrA.min():.4f} B: {ValueArrB.min():.4f}\n")
         f.write(f"Max | A: {ValueArrA.max():.4f} B: {ValueArrB.max():.4f}\n\n")
-        f.write(f"Percentile statistics\n")
+        f.write("Percentile statistics\n")
         f.write(f"P50  | A: {np.percentile(ValueArrA, 50):.4f}  B: {np.percentile(ValueArrB, 50):.4f}\n")
         f.write(f"P75  | A: {np.percentile(ValueArrA, 75):.4f}  B: {np.percentile(ValueArrB, 75):.4f}\n")
         f.write(f"P90  | A: {np.percentile(ValueArrA, 90):.4f}  B: {np.percentile(ValueArrB, 90):.4f}\n")

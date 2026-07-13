@@ -1,17 +1,14 @@
-#!/bin/bash
-set -e
-
-argsarr=("location" "--outputlocationcli=|outputlocation" "--test1=|test1" "--test2=|test2")
-comparearr=("locationA|locationB" "--outputlocationcliA=|outputlocationA" "--outputlocationcliB=|outputlocationB" "--testA=|testA" "--testB=|testB")
+# shellcheck shell=bash
+RUNCMDA=""
+RUNCMDB=""
+RUNCMD=""
 
 # TODO: This can be further modularized. Should probably get its own folder.
 runner() {
-    # sleep/cooldown function
-   . "$(dirname "${BASH_SOURCE[0]}")/msleep.sh"
-
-    local -n METHODOLOGY=$1
+    local METHODOLOGY=$1
     local RUNS=$2
-    local -n ARGS=$3
+    local OUTPUTDIR=$3
+    local -n ARGS=$4
 
     local COMMAND=""
     local COMMANDA=""
@@ -24,54 +21,45 @@ runner() {
         COMMAND="${ARGS[0]}"
     fi
 
-    if [[ "${ARGS[1]#|}" == *A ]]; then
-        local curI=3
+    if [[ "$METHODOLOGY" != "single" ]]; then
+        local curI=1
         local total=${#ARGS[@]}
 
         while [[ $curI -lt $total ]]; do 
             local opt="${ARGS[$curI]}"
-            local cli="${opt%%|*}"
-            local val="${opt##*|}"
+            local cli="${opt%%=*}="
+            local val="${opt##*=}"
             # Check 2nd last letter for A. cli ends with = usually.
             local check="${cli: -2: 1}"
 
             if [[ "$check" == "A" ]]; then
-                COMMANDA+=" $cli$val"
+                COMMANDA+=" ${cli%??}=${val}"
             else
-                COMMANDB+=" $cli$val"
+                COMMANDB+=" ${cli%??}=${val}"
             fi 
             ((curI++))
         done
     else
         for opt in "${ARGS[@]:2}"; do
-            local cli="${opt%%|*}"
-            local val="${opt##*|}"
-            COMMAND+=" $cli$val"
+            COMMAND+=" $opt"
         done
     fi
 
     run_cmd() {
         local RUN=$1
-        if [[ "${ARGS[1]#|}" == *A ]]; then
-            local outputlocationcliA="${ARGS[1]%%|*}"
-            local outputlocationA="${ARGS[1]##*|}"
-            RUNCMDA="$COMMANDA $outputlocationcliA$outputlocationA/Arun_$RUN.yaml"
-
-            local outputlocationcliB="${ARGS[2]%%|*}"
-            local outputlocationB="${ARGS[2]##*|}"
-            RUNCMDB="$COMMANDB $outputlocationcliB$outputlocationB/Brun_$RUN.yaml"
+        if [[ "$METHODOLOGY" != "single" ]]; then
+            RUNCMDA="$COMMANDA --benchmarks-file=$OUTPUTDIR/Arun_$RUN.yaml"
+            RUNCMDB="$COMMANDB --benchmarks-file=$OUTPUTDIR/Brun_$RUN.yaml"
         else
-            local outputlocationcli="${ARGS[1]%%|*}"
-            local outputlocation="${ARGS[1]##*|}"
-            RUNCMD="$COMMAND $outputlocationcli$outputlocation/run_$RUN.yaml"
+            RUNCMD="$COMMAND --benchmarks-file=$OUTPUTDIR/run_$RUN.yaml"
         fi
     }
 
     case "$METHODOLOGY" in
         "single")
-            for i in $(seq 1 $RUNS); do 
+            for i in $(seq 1 "$RUNS"); do 
                 run_cmd "$i"
-                echo "$RUNCMD"
+                $RUNCMD 
                 msleep
             done
             ;;
@@ -79,21 +67,22 @@ runner() {
             for i in $(seq 1 $RUNS); do 
                 run_cmd "$i"
                 echo "$RUNCMDA"
+                $RUNCMDA
                 msleep
             done
 
             for i in $(seq 1 $RUNS); do 
                 run_cmd "$i"
-                echo "$RUNCMDB"
+                $RUNCMDB
                 msleep
             done
             ;;
         "cycling")
             for i in $(seq 1 $RUNS); do 
                 run_cmd "$i"
-                echo "$RUNCMDA"
+                $RUNCMDA
                 msleep
-                echo "$RUNCMDB"
+                $RUNCMDB
                 msleep
             done
             ;;
@@ -105,24 +94,16 @@ runner() {
             while read -r choice; do 
                 if [[ "$choice" == 0 ]]; then
                     run_cmd $COUNTA
-                    echo "$RUNCMDA"
+                    $RUNCMDA
                     ((COUNTA++))
+                    msleep
                 else
                     run_cmd $COUNTB
-                    echo "$RUNCMDB"
+                    $RUNCMDB
+                    msleep
                     ((COUNTB++))
                 fi 
             done < <(shuf -i 1-"$TOTALRUNS" | while read -r num; do echo $((num % 2)); done)
             ;;
     esac
 }
-
-SINGLE="single"
-CYCLING="cycling"
-SEQUENTIAL="sequential"
-INTERLEAVING="random interleaving"
-
-runner SINGLE 5 argsarr
-runner SEQUENTIAL 3 comparearr
-runner CYCLING 5 comparearr
-runner INTERLEAVING 3 comparearr

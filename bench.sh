@@ -2,7 +2,6 @@
 set -e
 
 # default vars
-BENCHMODE="single"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="$SCRIPT_DIR/results/yaml"
 PLOTS_DIR="$SCRIPT_DIR/results/plots"
@@ -12,25 +11,6 @@ ALLOWED_DELETE_DIR="$SCRIPT_DIR/results/yaml"
 . "$SCRIPT_DIR/lib/cli/safe_rm.sh"
 
 mkdir -p "$OUTPUT_DIR" "$PLOTS_DIR"
-
-# --mode parse
-while [[ $# -gt 0 ]]; do 
-    case $1 in
-        --mode)
-            BENCHMODE="$2"
-            shift 2
-            ;;
-        *)
-            echo "Invalid argument: $1" >&2
-            exit 1
-            ;;
-    esac
-done
-
-if [[ "$BENCHMODE" != "single" && "$BENCHMODE" != "compare" ]]; then
-    echo "Error: --mode must be single or compare" >&2
-    exit 1
-fi
 
 # cmd vars
 UsingEnv=false
@@ -50,115 +30,33 @@ elif [[ "$Option" == "2" ]]; then
     UsingCmd=true
 fi 
 
-# option 1 | Use .env
-if [[ "$UsingEnv" == true ]]; then
-    . "$SCRIPT_DIR/lib/cli/load_env.sh" 
-    load_env
-fi
-
+# Delete old runs.
 for FILE in "$ALLOWED_DELETE_DIR"/*; do
     [[ -e "$FILE" ]] && safe_rm "$FILE"
 done
 
 # sleep/cooldown function
-. "$SCRIPT_DIR/lib/cli/msleep.sh"
+# source=lib/cli/msleep.sh
+source "$SCRIPT_DIR/lib/cli/msleep.sh"
+# runner function
+. "$SCRIPT_DIR/lib/cli/runner.sh"
 
-# TODO: - Gate the exegesis mode at the start so that it can do latency + uop.
+
+# option 1 | Use .env
+# TODO: 
 # - Add a/b/b/a mode.
-# - Every runner should be a function.
 if [[ "$UsingEnv" == true ]]; then
-
-    if [[ "$BENCHMODE" == "single" ]]; then
-        for i in $(seq 1 $RUNS); do
-            "$EXEGESIS_BIN" \
-                --mode="$EXEGESIS_MODE" \
-                --opcode-name="$OPCODE" \
-                --mcpu="$MCPU" \
-                --benchmarks-file="$OUTPUT_DIR/run_$i.yaml"
-            echo "Run $i/$RUNS complete"
-            msleep
-        done
-    fi
-
-    if [[ "$BENCHMODE" == "compare" ]]; then
-        
-        if [[ "$METHODOLOGY" == "cycling" ]]; then
-            for i in $(seq 1 $RUNS); do
-                "$EXEGESIS_BINA" \
-                    --mode="$EXEGESIS_MODEA" \
-                    --opcode-name="$OPCODEA" \
-                    --mcpu="$MCPUA" \
-                    --benchmarks-file="$OUTPUT_DIR/Arun_$i.yaml"
-                echo "A run $i/$RUNS complete"
-                msleep
-
-                "$EXEGESIS_BINB" \
-                    --mode="$EXEGESIS_MODEB" \
-                    --opcode-name="$OPCODEB" \
-                    --mcpu="$MCPUB" \
-                    --benchmarks-file="$OUTPUT_DIR/Brun_$i.yaml"
-                echo "B run $i/$RUNS complete"
-                msleep
-            done
-
-        elif [[ "$METHODOLOGY" == "random interleaving" ]]; then
-
-            COUNTA=1
-            COUNTB=1
-            TOTALRUNS=$((RUNS * 2))
-
-            while read -r choice; do 
-                if [[ "$choice" == 0 ]]; then
-                    "$EXEGESIS_BINA" \
-                        --mode="$EXEGESIS_MODEA" \
-                        --opcode-name="$OPCODEA" \
-                        --mcpu="$MCPUA" \
-                        --benchmarks-file="$OUTPUT_DIR/Arun_$COUNTA.yaml"
-                    echo "A run $COUNTA/$RUNS complete"
-                    msleep
-                    ((COUNTA++))
-                else
-                    "$EXEGESIS_BINB" \
-                        --mode="$EXEGESIS_MODEB" \
-                        --opcode-name="$OPCODEB" \
-                        --mcpu="$MCPUB" \
-                        --benchmarks-file="$OUTPUT_DIR/Brun_$COUNTB.yaml"
-                    echo "B run $COUNTB/$RUNS complete"
-                    msleep
-                    ((COUNTB++))
-                fi 
-            done < <(shuf -i 1-"$TOTALRUNS" | while read -r num; do echo $((num % 2)); done)
-
-        else
-            for i in $(seq 1 $RUNS); do
-                "$EXEGESIS_BINA" \
-                    --mode="$EXEGESIS_MODEA" \
-                    --opcode-name="$OPCODEA" \
-                    --mcpu="$MCPUA" \
-                    --benchmarks-file="$OUTPUT_DIR/Arun_$i.yaml"
-                echo "A run $i/$RUNS complete"
-                msleep
-            done
-            
-            echo "2 second cooldown between comparison" 
-            sleep 2
-
-            for i in $(seq 1 $RUNS); do
-                "$EXEGESIS_BINB" \
-                    --mode="$EXEGESIS_MODEB" \
-                    --opcode-name="$OPCODEB" \
-                    --mcpu="$MCPUB" \
-                    --benchmarks-file="$OUTPUT_DIR/Brun_$i.yaml"
-                echo "B run $i/$RUNS complete"
-                msleep
-            done
-        fi
-    fi
+    . "$SCRIPT_DIR/lib/cli/load_env.sh"
+    . "$SCRIPT_DIR/lib/cli/exegesis_formatter.sh"
+    load_env
+    exegesis_formatter "$METHODOLOGY" RAWENV
+    runner "$METHODOLOGY" "$RUNS" "$OUTPUT_DIR" FORMATTEDARRAY
 fi
 
 # TODO: Complete section. Currently only supports sequential METHODOLOGY.
-# option 2 goes here.
-if [[ "$UsingCmd" == true ]]; then
+# option 2 goes here
+# This is currently broken..
+if [[ "$UsingCmd" == true ]]; then 
 
     if [[ "$BENCHMODE" == "single" ]]; then 
         read -p "Enter Exegesis flags: " Flags
@@ -280,7 +178,7 @@ if [[ "$UsingCmd" == true ]]; then
 fi
 
 # Label
-if [[ "$BENCHMODE" == "compare" ]]; then
+if [[ "$BENCHMODE" != "single" ]]; then
     if [ -n "$LABELA" ] && [ -n "$LABELB" ]; then
         LABELS="${LABELA}|${LABELB}"
     else
@@ -291,4 +189,4 @@ else
 fi
 
 # Python cmd - should be given accurate args.
-python3 analyze.py "${BENCHMODE}" "${RUNS}" "${LABELS}" "${METHODOLOGY:-sequential}" "${COOLDOWNTIMER:-500}"
+python3 analyze.py "${METHODOLOGY}" "${RUNS}"  "${COOLDOWNTIMER:-500}" "${LABELS}"
