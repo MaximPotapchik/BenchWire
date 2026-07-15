@@ -10,8 +10,10 @@ second.
 
 ## The three orderings
 
-`sequential` | All A runs, then all B runs. Simplest, most exposed to
-drift. Fine for a sanity check, not sufficient to support a defended
+`single` | Runs a single binary, no comparison involved.
+
+`sequential` | All A runs, then all B runs. Simplest for A/B, most exposed
+to drift. Fine for a sanity check, not sufficient to support a defended
 claim.
 
 `cycling` | Strict A, B, A, B alternation. Spreads drift evenly across

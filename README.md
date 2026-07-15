@@ -1,7 +1,7 @@
 # BenchWire 
 
-Bash + Python automation harness for [`llvm-exegesis`](https://llvm.org/docs/CommandGuide/llvm-exegesis.html).
-Runs single or A/B comparison benchmarks, computes statistics, and plots
+This is an automation harness currently for [`llvm-exegesis`](https://llvm.org/docs/CommandGuide/llvm-exegesis.html).
+It runs single or A/B comparison benchmarks, computes statistics, and plots
 the result.
 
 ![example image of plot](results/examples/exampleplot.png)
@@ -100,9 +100,10 @@ summary, timestamped).
 
 Set via `METHODOLOGY=` in `.env`:
 
-- `sequential` (default) | all A runs, then all B runs
+- `single` | Runs a single binary.
+- `sequential` (default) | All A runs, then all B runs.
 - `cycling` | A, B, A, B, etc.
-- `random interleaving` | shuffled order, same N runs each
+- `random interleaving` | Shuffled order, same N runs each.
 
 Full reasoning in [`docs/methodology.md`](docs/methodology.md). Short
 version: naive back-to-back comparison lets anything that drifts over
@@ -111,9 +112,9 @@ absorbed entirely into whichever side ran second.
 
 ## Docs
 
-- [`docs/methodology.md`](docs/methodology.md) | why run ordering matters.
-- [`docs/known-issues.md`](docs/known-issues.md) | current gaps and rough edges.
-- [`docs/roadmap.md`](docs/roadmap.md) | what's planned but not built yet.
+- [`docs/methodology.md`](docs/methodology.md) | Why run ordering matters.
+- [`docs/known-issues.md`](docs/known-issues.md) | Current gaps and rough edges.
+- [`docs/roadmap.md`](docs/roadmap.md) | What's planned but not built yet.
 
 ## Roadmap
 
@@ -121,6 +122,12 @@ Actively extending this beyond a single-box benchmark runner: optional
 InfluxDB export (with git-SHA tagging), additional command utilities, and
 run progress/ETA instead of a wall of identical "run complete" lines. Details
 and reasoning in [`docs/roadmap.md`](docs/roadmap.md).
+
+## In progress
+
+`internal/` | Go rewrite in progress, not yet the recommended install
+path, bash + `bench.sh` remains primary until deployment is simpler
+than `go build`.
 
 ## Contributing
 

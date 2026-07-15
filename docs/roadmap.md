@@ -1,7 +1,22 @@
 # Roadmap
  
 These are future plans for expansion of this project.
- 
+
+## Scheduling model analysis sweep
+
+llvm-exegesis already ships `-mode=analysis` with
+`-analysis-clusters-output-file` and `-analysis-inconsistencies-output-file`,
+built to compare measured benchmarks against the TableGen scheduling
+model and flag where they disagree. 
+
+A sweep across many opcodes in one invocation instead of by hand,
+aggregate the inconsistency output into one report. Same
+underlying mechanism as `--mode scan` listed below, pointed at exegesis's own
+analysis mode instead of latency/uops.
+
+With bash, this is completely impractical. The Go rewrite was initiated with
+this in mind, along with performance at scale. 
+
 ## InfluxDB export
  
 Right now results only exist as timestamped markdown + png in
@@ -44,7 +59,7 @@ on top.
 Can be dockerized within its own separate module as well. Support for
 more DBs would be useful.
  
-## Additional command utilities
+## Additional command utilities (Go rewrite changes this)
  
 These may either be their own utility or a feature flag for `bench.sh`.
  
@@ -87,8 +102,5 @@ dashboard consumption without requiring a live InfluxDB instance.
 - `Parsing & other optimizations` | It may be viable to refactor
 certain sections of the Python analysis with C++, after profiling.
 
-- `LLVM exegesis analysis sweep` | This would likely orchestrate
-llvm-exegesis's own `-mode=analysis` and
-`-analysis-inconsistencies-output-file` across many opcodes, rather
-than reimplementing scheduling-model comparison from scratch.
-
+- `Enhanced analytics` | Expanding the python analysis with further
+statistical categories, calculations, and more.
