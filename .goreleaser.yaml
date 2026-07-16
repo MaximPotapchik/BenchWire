@@ -1,0 +1,28 @@
+version: 2
+
+builds:
+  - id: benchwire
+    main: ./cmd/benchwire
+    binary: benchwire
+    goos:
+      - linux
+      - darwin
+    # - windows | Not yet.
+    goarch:
+      - amd64
+      - arm64
+      - arm 
+    # - riscv64
+    env:
+      - CGO_ENABLED=0
+
+archives:
+  - formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Os }}_{{ .Arch }}
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc

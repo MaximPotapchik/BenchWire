@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
+	"strconv"
 	"os/exec"
 	"benchwire/internal/config"
 	"benchwire/internal/exegesis"
-	"benchwire/internal/runners"
+	"benchwire/internal/runner"
 )
 
 func main() {

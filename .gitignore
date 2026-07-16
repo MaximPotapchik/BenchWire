@@ -4,4 +4,8 @@
 results/yaml/*
 results/plots/*
 
+# Go build
+dist/
+
+# Random
 TODO.md
