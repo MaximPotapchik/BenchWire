@@ -72,6 +72,9 @@ for why this matters.
 
 ## Quick Start
 
+For further information on commands available in .env mode, see [`docs/commands.md`](docs/commands.md).
+
+
 ```bash
 git clone https://github.com/MaximPotapchik/BenchWire
 cd BenchWire
@@ -80,6 +83,7 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
+For the full list of `.env` variables and flag syntax, see [`docs/commands.md`](docs/commands.md).
 Edit `.env` with your binary path(s), opcode, and mode, then run:
 
 ```bash
@@ -110,8 +114,8 @@ version: naive back-to-back comparison lets anything that drifts over
 time (thermal state, frequency scaling, whatever else is on the box) get
 absorbed entirely into whichever side ran second.
 
-## Docs
-
+## docs
+- [`docs/commands.md`](docs/commands.md) | All of the commands currently available.
 - [`docs/methodology.md`](docs/methodology.md) | Why run ordering matters.
 - [`docs/known-issues.md`](docs/known-issues.md) | Current gaps and rough edges.
 - [`docs/roadmap.md`](docs/roadmap.md) | What's planned but not built yet.
