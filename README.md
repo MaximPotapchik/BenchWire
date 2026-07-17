@@ -66,39 +66,40 @@ for why this matters.
 
 ## Requirements
 
-- `llvm-exegesis` built with libpfm4 support
-- bash
-- Python 3 with the packages in `requirements.txt`
+- `llvm-exegesis` and its dependencies. 
+- Bash
+- Python 3
 
 ## Quick Start
-
-For further information on commands available in .env mode, see [`docs/commands.md`](docs/commands.md).
-
 
 ```bash
 git clone https://github.com/MaximPotapchik/BenchWire
 cd BenchWire
-chmod +x bench.sh
-pip install -r requirements.txt
-cp .env.example .env
+chmod +x setup.sh
+./setup.sh
 ```
 
 For the full list of `.env` variables and flag syntax, see [`docs/commands.md`](docs/commands.md).
-Edit `.env` with your binary path(s), opcode, and mode, then run:
+
+This will run the setup script, creating the `.env` and populating it with
+.env.example.
+Edit `.env` with your binary path(s), along with your cli options, then run:
 
 ```bash
-./bench.sh --mode single
-./bench.sh --mode compare
+./benchwire
 ```
 
 You'll be asked to pick option 1 (use `.env`) or option 2 (enter flags at
-the prompt). Option 2 is sequential-only and doesn't take labels yet,
+the prompt). Option 2 is currently disabled via Go. For more information, 
 see [`docs/known-issues.md`](docs/known-issues.md).
 
-Every run wipes `results/yaml/` first, so don't point `ALLOWED_DELETE_DIR`
-anywhere sensitive if this is forked. Results land in `results/yaml/` (raw
-exegesis output per run) and `results/plots/` (a plot + a markdown stats
-summary, timestamped). 
+A legacy bash script version of this is available via `./bench.sh`
+
+If you use the bash script, every run wipes `results/yaml/` first, so 
+don't point `ALLOWED_DELETE_DIR` anywhere sensitive if this is forked.
+
+Results land in `results/yaml/` (raw exegesis output per run) and 
+`results/plots/` (a plot + a markdown stats summary, timestamped). 
 
 ## Comparison methodology
 
@@ -114,7 +115,8 @@ version: naive back-to-back comparison lets anything that drifts over
 time (thermal state, frequency scaling, whatever else is on the box) get
 absorbed entirely into whichever side ran second.
 
-## docs
+## Docs
+
 - [`docs/commands.md`](docs/commands.md) | All of the commands currently available.
 - [`docs/methodology.md`](docs/methodology.md) | Why run ordering matters.
 - [`docs/known-issues.md`](docs/known-issues.md) | Current gaps and rough edges.
@@ -129,9 +131,8 @@ and reasoning in [`docs/roadmap.md`](docs/roadmap.md).
 
 ## In progress
 
-`internal/` | Go rewrite in progress, not yet the recommended install
-path, bash + `bench.sh` remains primary until deployment is simpler
-than `go build`.
+Further analysis capabilities being added. Modularization of the python components
+of this project, as well as validation counter tracking and more.
 
 ## Contributing
 

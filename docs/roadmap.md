@@ -4,8 +4,8 @@ These are future plans for expansion of this project.
 
 ## Scheduling model analysis sweep
 
-llvm-exegesis already ships `-mode=analysis` with
-`-analysis-clusters-output-file` and `-analysis-inconsistencies-output-file`,
+llvm-exegesis already ships `--mode=analysis` with
+`--analysis-clusters-output-file` and `--analysis-inconsistencies-output-file`,
 built to compare measured benchmarks against the TableGen scheduling
 model and flag where they disagree. 
 

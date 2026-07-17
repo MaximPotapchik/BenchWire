@@ -1,4 +1,5 @@
 version: 2
+project_name: benchwire
 
 builds:
   - id: benchwire

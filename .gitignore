@@ -6,6 +6,7 @@ results/plots/*
 
 # Go build
 dist/
+benchwire
 
 # Random
 TODO.md
