@@ -8,5 +8,10 @@ results/plots/*
 dist/
 benchwire
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
 # Random
 TODO.md
