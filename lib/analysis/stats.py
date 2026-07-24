@@ -26,6 +26,9 @@ class StatsResult:
     
     def Compare(self, other, stat):
         return self.GetStat(stat), other.GetStat(stat)
+    
+    def Diff(self, valueA, valueB):
+        return abs(valueB - valueA) / ((valueA + valueB) / 2) * 100
 
     # Add new statistical calculations here.
     def Mean(self, stat):
