@@ -4,45 +4,20 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"os/exec"
-	"strings"
+	"benchwire/internal/config"
 )
 
-type config struct {
-	binary string
-	args []string
+type RunArgs struct {
+	Methodology string
+    Runs int
+    CooldownMs int
+    OutputDir string
+    Targets []config.Target
 }
 
-func buildConfigs(methodology string, args []string) (single, a, b config) {
-	if strings.Contains(args[0], "|") {
-		parts := strings.SplitN(args[0], "|", 2)
-		a.binary, b.binary = parts[0], parts[1]
-	} else {
-		single.binary = args[0]
-	}
-
-	if methodology == "single" {
-		single.args = append(single.args, args[1:]...)
-		return
-	}
-
-	for _, opt := range args[1:] {
-		lhs, val, found := strings.Cut(opt, "=")
-		if !found || lhs == "" {
-			continue
-		}
-		marker := lhs[len(lhs)-1]
-		flagName := lhs[:len(lhs)-1]
-		if marker == 'A' {
-			a.args = append(a.args, flagName+"="+val)
-		} else {
-			b.args = append(b.args, flagName+"="+val)
-		}
-	}
-	return
-}
-
-func buildArgs(cfg config, outputDir, prefix string, run int) []string {
-	args := append([]string{}, cfg.args...)
+// TODO: Make this work for more than just --benchmarks-file. Other benchmarkers.
+func buildArgs(cfg config.Target, outputDir, prefix string, run int) []string {
+	args := append([]string{}, cfg.Flags...)
 	return append(args, fmt.Sprintf("--benchmarks-file=%s/%srun_%d.yaml", outputDir, prefix, run))
 }
 
@@ -54,48 +29,47 @@ func execute(binary string, args []string) error {
 }
 
 // TODO: - Default switch.
-func Run(methodology string, runs, cooldownMs int, outputDir string, args []string) error {
-	single, a, b := buildConfigs(methodology, args)
+func Run(args RunArgs) error {
 
-	switch methodology {
+	switch args.Methodology {
 	case "single":
-		for i := 1; i <= runs; i++ {
-			if err := execute(single.binary, buildArgs(single, outputDir, "", i)); err != nil {
+		for i := 1; i <= args.Runs; i++ {
+			if err := execute(args.Targets[0].BinPath, buildArgs(args.Targets[0], args.OutputDir, "", i)); err != nil {
 				return err
 			}
-			fmt.Printf("Run %d/%d complete\n", i, runs)
-			msleep(cooldownMs)
+			fmt.Printf("Run %d/%d complete\n", i, args.Runs)
+			msleep(args.CooldownMs)
 		}
 
 	case "sequential":
-		for i := 1; i <= runs; i++ {
-			if err := execute(a.binary, buildArgs(a, outputDir, "A", i)); err != nil {
+		for i := 1; i <= args.Runs; i++ {
+			if err := execute(args.Targets[0].BinPath, buildArgs(args.Targets[0], args.OutputDir, "A", i)); err != nil {
 				return err
 			}
-			msleep(cooldownMs)
+			msleep(args.CooldownMs)
 		}
-		for i := 1; i <= runs; i++ {
-			if err := execute(b.binary, buildArgs(b, outputDir, "B", i)); err != nil {
+		for i := 1; i <= args.Runs; i++ {
+			if err := execute(args.Targets[1].BinPath, buildArgs(args.Targets[1], args.OutputDir, "B", i)); err != nil {
 				return err
 			}
-			msleep(cooldownMs)
+			msleep(args.CooldownMs)
 		}
 
 	case "cycling":
-		for i := 1; i <= runs; i++ {
-			if err := execute(a.binary, buildArgs(a, outputDir, "A", i)); err != nil {
+		for i := 1; i <= args.Runs; i++ {
+			if err := execute(args.Targets[0].BinPath, buildArgs(args.Targets[0], args.OutputDir, "A", i)); err != nil {
 				return err
 			}
-			msleep(cooldownMs)
-			if err := execute(b.binary, buildArgs(b, outputDir, "B", i)); err != nil {
+			msleep(args.CooldownMs)
+			if err := execute(args.Targets[1].BinPath, buildArgs(args.Targets[1], args.OutputDir, "B", i)); err != nil {
 				return err
 			}
-			msleep(cooldownMs)
+			msleep(args.CooldownMs)
 		}
 
 	case "random interleaving":
-		order := make([]byte, 0, runs*2)
-		for i := 0; i < runs; i++ {
+		order := make([]byte, 0, args.Runs*2)
+		for i := 0; i < args.Runs; i++ {
 			order = append(order, 'A', 'B')
 		}
 		rand.Shuffle(len(order), func(i, j int) { order[i], order[j] = order[j], order[i] })
@@ -103,17 +77,17 @@ func Run(methodology string, runs, cooldownMs int, outputDir string, args []stri
 		countA, countB := 1, 1
 		for _, side := range order {
 			if side == 'A' {
-				if err := execute(a.binary, buildArgs(a, outputDir, "A", countA)); err != nil {
+				if err := execute(args.Targets[0].BinPath, buildArgs(args.Targets[0], args.OutputDir, "A", countA)); err != nil {
 					return err
 				}
 				countA++
 			} else {
-				if err := execute(b.binary, buildArgs(b, outputDir, "B", countB)); err != nil {
+				if err := execute(args.Targets[1].BinPath, buildArgs(args.Targets[1], args.OutputDir, "B", countB)); err != nil {
 					return err
 				}
 				countB++
 			}
-			msleep(cooldownMs)
+			msleep(args.CooldownMs)
 		}
 	}
 	return nil
