@@ -71,8 +71,8 @@ class BasePlot:
         self.ThemeLegend()
         return self.fig
 
-    def Save(self, path):
-        self.fig.savefig(f"{path}/test.png", dpi=200)
+    def Save(self, path, name):
+        self.fig.savefig(f"{path}/{name}", dpi=200)
 
 # This class holds instances for BasePlots. 
 class PlotGrid:
@@ -98,5 +98,5 @@ class PlotGrid:
             plot.Render(statName)
         return self.fig
 
-    def Save(self, path):
-        self.fig.savefig(f"{path}/test2.png", dpi=200)
+    def Save(self, path, name):
+        self.fig.savefig(f"{path}/{name}", dpi=200)
