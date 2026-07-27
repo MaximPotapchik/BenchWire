@@ -126,9 +126,11 @@ def Aggregate(runs, statsPreset, labels):
         }
 
     else:
-        allStats[labels] = {
-            "runs" : runs,
-            "stats" : statList
+        label = labels[0]
+
+        allStats[label] = {
+            "runs": runs,
+            "stats": statList
         }
 
     return allStats

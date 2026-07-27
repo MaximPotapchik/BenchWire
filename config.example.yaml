@@ -1,0 +1,21 @@
+methodology: "single"
+runs: 50
+cooldownTimer: 20
+
+targets:
+  - label: "Label"
+    binPath: "Add your binary path here"
+    flags:
+      - --mcpu=native
+      - --mode=latency
+      - --opcode-name=ADD64rr
+
+# If you would like to compare binaries, swap methodology to 1 of the three
+# comparison ones listed in docs/commands.md.
+#  - label: "LabelB"
+#    binPath: "Add your binary path here"
+#    flags:
+#      - --mcpu=native
+#      - --mode=latency
+#      - --opcode-name=ADD64rr
+
