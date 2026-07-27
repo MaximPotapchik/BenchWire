@@ -2,6 +2,7 @@ import os
 import yaml
 
 # TODO: Move this to its own file. root_finder.py or something.
+# grabs yaml location 
 def FindRootDirectory(rootDirName):
     currentDir = os.path.dirname(os.path.abspath(__file__))
 
@@ -15,7 +16,8 @@ def FindRootDirectory(rootDirName):
 
         currentDir = parentDir
 
-# Checks for nested values.
+# This is an example stat extractor. Not used anymore. 
+"""
 def ExtractStats(targetStats, data):
     extractedStats = {}
 
@@ -38,9 +40,9 @@ def ExtractStats(targetStats, data):
                 merge(ExtractStats(targetStats, item))
 
     return extractedStats
+"""
 
-def YamlParser(prefix, run, collectedStats):
-    # grabs yaml location 
+def YamlRunParser(prefix, run):
     rootDir = FindRootDirectory("BenchWire") 
     yamlDir = os.path.join(rootDir, "results", "yaml")
     
@@ -48,7 +50,14 @@ def YamlParser(prefix, run, collectedStats):
     with open(path) as f:
         stats = yaml.safe_load(f)
     
-    extractedStats = ExtractStats(collectedStats, stats)
-    
-    return extractedStats
+    return stats
+
+def YamlConfigParser():
+    rootDir = FindRootDirectory("BenchWire")
+    configLoc = os.path.join(rootDir, "config.yaml")
+
+    with open(configLoc) as f:
+        config = yaml.safe_load(f)
+
+    return config
 

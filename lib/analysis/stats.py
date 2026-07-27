@@ -28,7 +28,8 @@ class StatsResult:
         return self.GetStat(stat), other.GetStat(stat)
     
     def Diff(self, valueA, valueB):
-        return abs(valueB - valueA) / ((valueA + valueB) / 2) * 100
+        denom = (valueA + valueB) / 2
+        return abs(valueB - valueA) / denom * 100 if denom else None
 
     # Add new statistical calculations here.
     def Mean(self, stat):
