@@ -33,13 +33,13 @@ if [[ $HASPYTHON3 -eq 1 && $HASPIP -eq 1 ]]; then
 fi
 
 # .env check.
-if [[ ! -f "$SCRIPT_DIR/.env" || ! -s "$SCRIPT_DIR/.env" ]]; then
-    if [[ -f "$SCRIPT_DIR/.env.example" ]]; then
-        cp "$SCRIPT_DIR/.env.example" "$SCRIPT_DIR/.env"
-        echo "[BenchWire] .env file empty, .env.example used. Please fill it with your own variables."
+if [[ ! -f "$SCRIPT_DIR/config.yaml" || ! -s "$SCRIPT_DIR/config.yaml" ]]; then
+    if [[ -f "$SCRIPT_DIR/config.example.yaml" ]]; then
+        cp "$SCRIPT_DIR/config.example.yaml" "$SCRIPT_DIR/config.yaml"
+        echo "[BenchWire] config.yaml file empty, config.example.yaml used. Please fill it with your own variables."
     else
-        echo "[BenchWire] .env.example not found."
-        echo "[BenchWire] Please git clone the repository again or create .env manually."
+        echo "[BenchWire] config.example.yaml not found."
+        echo "[BenchWire] Please git clone the repository again or create config.yaml manually."
     fi
 fi
 
@@ -62,6 +62,4 @@ fi
 
 echo "[BenchWire] After populating your .env, use ./benchwire to run the harness."
 echo "[BenchWire] To see available commands, check docs/commands.md."
-echo "[BenchWire] If you would like to use the legacy bash command, use ./bench.sh"
-
-chmod +x bench.sh
+echo "[BenchWire] Legacy bash command currently unavailable."
