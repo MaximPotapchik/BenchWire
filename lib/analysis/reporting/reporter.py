@@ -1,5 +1,4 @@
 
-
 class Reporter:
     def __init__(self, statsA, statsB=None):
         self.statsA, self.statsB = statsA, statsB
@@ -19,7 +18,7 @@ class DocumentReporter(Reporter):
         self.statIndex = {}
         self.plotFile = None
 
-    def AddArg(self, content):
+    def AddLine(self, content):
         self.lines.append(("text", content))
         return self
 
@@ -43,8 +42,12 @@ class DocumentReporter(Reporter):
         self.lines.append(("table", table))
         return self
 
-    def Render(self, reportNum, **fields):
-        output = self.RenderHeader(reportNum, **fields) + self.RenderPlotRef()
+    def SetPlotFile(self, path):
+        self.plotFile = path
+        return self
+
+    def Render(self, title, mode, timestamp, **fields):
+        output = self.RenderHeader(title, mode, timestamp, **fields) + self.RenderPlotRef()
         
         for line in self.lines:
             if line[0] == "stat":
