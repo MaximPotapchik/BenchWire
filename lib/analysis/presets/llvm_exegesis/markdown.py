@@ -1,7 +1,7 @@
 from lib.analysis.reporting.markdown import MarkdownReporter
 
-def ExegesisMarkdown(stats, fullArgs, targetCnt, outputDir, timestamp):
-    val = fullArgs["analysis"]["collectedStats"][0]
+def ExegesisMarkdown(stats, fullArgs, targetCnt, outputDir, timestamp, plotFile):
+    val = "value"
     
     summary = [
         ("Mean", "Mean", ""),
@@ -68,7 +68,7 @@ def ExegesisMarkdown(stats, fullArgs, targetCnt, outputDir, timestamp):
         for p in [50, 75, 90, 99, 99.9, 99.99]:
             r.AddTableRow(f"P{p}", stats.P(val, p))
     
-    r.SetPlotFile(f"plot_{timestamp}.png")
+    r.SetPlotFile(plotFile)
     content = r.Render(opcode, mode, timestamp)
     name = f"report_{timestamp}.md"
     r.Save(outputDir, name, content)

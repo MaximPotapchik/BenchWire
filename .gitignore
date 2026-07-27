@@ -1,4 +1,4 @@
-.env
+config.yaml
 
 # Output directories
 results/yaml/*
