@@ -5,14 +5,14 @@ It runs single or A/B comparison benchmarks automatically, computes statistics,
 and plots the result. The goal is to have a modular framework capable of
 targetting any benchmarker, with continuous integration in mind.
 
-![example image of plot](results/examples/examplePlot.png)
+![example image of plot](results/examples/exampleplot.png)
 
 <details>
 <summary>Example statistical output</summary>
 
 **Methodology:** random interleaving
 
-**Runs:** 50
+**Runs:** 20
 
 **CPU:** znver2
 
