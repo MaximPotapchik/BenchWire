@@ -1,68 +1,74 @@
 # BenchWire 
 
-This is an automation harness currently for [`llvm-exegesis`](https://llvm.org/docs/CommandGuide/llvm-exegesis.html).
-It runs single or A/B comparison benchmarks, computes statistics, and plots
-the result.
+This is an automation harness currently used for [`llvm-exegesis`](https://llvm.org/docs/CommandGuide/llvm-exegesis.html).
+It runs single or A/B comparison benchmarks automatically, computes statistics,
+and plots the result. The goal is to have a modular framework capable of
+targetting any benchmarker, with continuous integration in mind.
 
-![example image of plot](results/examples/exampleplot.png)
+![example image of plot](results/examples/examplePlot.png)
 
 <details>
 <summary>Example statistical output</summary>
 
-Latency | Mode - compare
+**Methodology:** random interleaving
 
-A. Patch #1 B. Patch #2
+**Runs:** 50
 
-Methodology - random interleaving | 50 Runs | Cooldown time - 50ms
+**CPU:** znver2
 
-Mean | A: 1.0127 B: 1.0127
-Mean Difference: 0.0085% (Patch #2 higher)
+**Triple:** x86_64-unknown-linux-gnu
 
-Median | A: 1.0091 B: 1.0093
-Median Difference: 0.0248% (Patch #2 higher)
+**Min instructions:** 10000
 
-Standard Deviation | A: 0.0148 B: 0.0152
-StdDev Difference: 2.6157% (Patch #2 higher)
+### Summary Statistics
 
-Coefficient of Variation | A: 1.4664% B: 1.5051%
-CoV Difference: 2.6072% (Patch #2 higher)
+| Metric | Build A | Build B | Diff |
+|---|---|---|---|
+| Mean | 1.0107 | 1.0093 | 0.13% (Build A) |
+| Median | 1.0091 | 1.0093 | 0.02% (Build B) |
+| Standard Deviation | 0.0108 | 0.0037 | 98.09% (Build A) |
+| Variance | 1.1742e-04 | 1.3725e-05 | 158.14% (Build A) |
+| Coefficient of Variation | 1.07% | 0.37% | 97.99% (Build A) |
+| Range | 0.0779 | 0.0277 | 95.08% (Build A) |
+| IQR | 0.0008 | 0.0005 | 43.14% (Build A) |
+| Min | 1.0055 | 1.0053 | 0.02% (Build A) |
+| Max | 1.0834 | 1.0330 | 4.76% (Build A) |
 
-Min | A: 1.0054 B: 1.0055
+### Percentile Statistics
 
-Max | A: 1.0854 B: 1.1097
-
-Percentile statistics
-
-P50  | A: 1.0091  B: 1.0093
-
-P75  | A: 1.0094  B: 1.0098
-
-P90  | A: 1.0104  B: 1.0114
-
-P99  | A: 1.0811  B: 1.0738
-
-P99.9| A: 1.0850 B: 1.1061
+| Percentile | Build A | Build B | Diff |
+|---|---|---|---|
+| P50 | 1.0091 | 1.0093 | 0.02% (Build B) |
+| P75 | 1.0094 | 1.0094 | 0.00% (Build A) |
+| P90 | 1.0098 | 1.0098 | 0.00% (Build A) |
+| P99 | 1.0541 | 1.0236 | 2.93% (Build A) |
+| P99.9 | 1.0805 | 1.0321 | 4.58% (Build A) |
+| P99.99 | 1.0831 | 1.0329 | 4.74% (Build A) |
 
 </details>
 
 ### Why?
 
-Currently there are no other LLVM Exegesis automation harnesses. This
-project looks to allow seamless automation for benchmarking with Exegesis,
+Currently there are no other LLVM Exegesis automation harnesses in open source.
+This project looks to allow seamless automation for benchmarking with Exegesis,
 and eventually beyond it.
 
 ## What it does
 
-- Runs `llvm-exegesis` N times in single mode, or runs two configurations
-head to head in compare mode.
+1. Runs `llvm-exegesis` N times in single mode, or runs two configurations
+head to head in compare mode. This is done automatically after selecting 1 or 2
+after running the command.
 
-- Compare mode supports three run orderings (sequential, cycling, random
+2. Compare mode supports three run orderings (sequential, cycling, random
 interleaving) specifically to control for time-based bias like thermal
 drift and frequency scaling skewing numbers, see [`docs/methodology.md`](docs/methodology.md)
 for why this matters.
 
-- Produces a Catppuccin-themed plot and a markdown stats summary
-(mean, median, stddev, CoV, percentiles up to P99.9) for every run.
+3. Parses the outputs and automatically performs statistical analysis
+with the outputs of the target benchmarker.
+
+4. Produces a Catppuccin-themed plot and a markdown stats summary
+(mean, median, stddev, CoV, percentiles up to P99.99 + more) for every run.
 
 ## Requirements
 
@@ -79,31 +85,30 @@ chmod +x setup.sh
 ./setup.sh
 ```
 
-For the full list of `.env` variables and flag syntax, see [`docs/commands.md`](docs/commands.md).
+For the full list of `config.yaml` settings, see [`docs/commands.md`](docs/commands.md).
 
-This will run the setup script, creating the `.env` and populating it with
-.env.example.
-Edit `.env` with your binary path(s), along with your cli options, then run:
+This will run the setup script, creating the `config.yaml` and populating it with
+`config.example.yaml`.
+Edit `config.yaml` with your binary path(s), along with your desired 
+llvm-exegesis flags, then run:
 
 ```bash
 ./benchwire
 ```
 
-You'll be asked to pick option 1 (use `.env`) or option 2 (enter flags at
-the prompt). Option 2 is currently disabled via Go. For more information, 
+You'll be asked to pick option 1 (use `config.yaml`) or option 2 (enter flags
+at the prompt). Option 2 is currently disabled via Go. For more information, 
 see [`docs/known-issues.md`](docs/known-issues.md).
 
-A legacy bash script version of this is available via `./bench.sh`
-
-If you use the bash script, every run wipes `results/yaml/` first, so 
-don't point `ALLOWED_DELETE_DIR` anywhere sensitive if this is forked.
+Currently, this only supports `--mode=latency`. Support for further modes is
+being being built.
 
 Results land in `results/yaml/` (raw exegesis output per run) and 
 `results/plots/` (a plot + a markdown stats summary, timestamped). 
 
 ## Comparison methodology
 
-Set via `METHODOLOGY=` in `.env`:
+Set via `methodology:` in `config.yaml`:
 
 - `single` | Runs a single binary.
 - `sequential` (default) | All A runs, then all B runs.
@@ -125,14 +130,14 @@ absorbed entirely into whichever side ran second.
 ## Roadmap
 
 Actively extending this beyond a single-box benchmark runner: optional
-InfluxDB export (with git-SHA tagging), additional command utilities, and
+InfluxDB export (with git-SHA tagging), additional configuration utilities, and
 run progress/ETA instead of a wall of identical "run complete" lines. Details
 and reasoning in [`docs/roadmap.md`](docs/roadmap.md).
 
 ## In progress
 
-Further analysis capabilities being added. Modularization of the python components
-of this project, as well as validation counter tracking and more.
+Currently being upgraded in capabilities regarding full support for 
+`llvm-exegesis` modes.
 
 ## Contributing
 

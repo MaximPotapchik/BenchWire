@@ -1,31 +1,40 @@
-## Latency | Mode - compare 
+# ADD64rr latency Batch #260728162931
 
-[plt](plot07_164044.png)
 
-## Statistics
+<img src="plot_260728162931.png" width="600">
 
-A. Patch #1 B. Patch #2
+**Methodology:** random interleaving
 
-Methodology - random interleaving | 50 Runs | Cooldown time - 50ms
+**Runs:** 50
 
-Mean | A: 1.0127 B: 1.0127
-Mean Difference: 0.0085% (Patch #2 higher)
+**CPU:** znver2
 
-Median | A: 1.0091 B: 1.0093
-Median Difference: 0.0248% (Patch #2 higher)
+**Triple:** x86_64-unknown-linux-gnu
 
-Standard Deviation | A: 0.0148 B: 0.0152
-StdDev Difference: 2.6157% (Patch #2 higher)
+**Min instructions:** 10000
 
-Coefficient of Variation | A: 1.4664% B: 1.5051%
-CoV Difference: 2.6072% (Patch #2 higher)
+### Summary Statistics
 
-Min | A: 1.0054 B: 1.0055
-Max | A: 1.0854 B: 1.1097
+| Metric | Build A | Build B | Diff |
+|---|---|---|---|
+| Mean | 1.0107 | 1.0093 | 0.13% (Build A) |
+| Median | 1.0091 | 1.0093 | 0.02% (Build B) |
+| Standard Deviation | 0.0108 | 0.0037 | 98.09% (Build A) |
+| Variance | 1.1742e-04 | 1.3725e-05 | 158.14% (Build A) |
+| Coefficient of Variation | 1.07% | 0.37% | 97.99% (Build A) |
+| Range | 0.0779 | 0.0277 | 95.08% (Build A) |
+| IQR | 0.0008 | 0.0005 | 43.14% (Build A) |
+| Min | 1.0055 | 1.0053 | 0.02% (Build A) |
+| Max | 1.0834 | 1.0330 | 4.76% (Build A) |
 
-Percentile statistics
-P50  | A: 1.0091  B: 1.0093
-P75  | A: 1.0094  B: 1.0098
-P90  | A: 1.0104  B: 1.0114
-P99  | A: 1.0811  B: 1.0738
-P99.9| A: 1.0850 B: 1.1061
+### Percentile Statistics
+
+| Percentile | Build A | Build B | Diff |
+|---|---|---|---|
+| P50 | 1.0091 | 1.0093 | 0.02% (Build B) |
+| P75 | 1.0094 | 1.0094 | 0.00% (Build A) |
+| P90 | 1.0098 | 1.0098 | 0.00% (Build A) |
+| P99 | 1.0541 | 1.0236 | 2.93% (Build A) |
+| P99.9 | 1.0805 | 1.0321 | 4.58% (Build A) |
+| P99.99 | 1.0831 | 1.0329 | 4.74% (Build A) |
+

@@ -8,7 +8,7 @@ Anything that drifts over the run window (thermal state, frequency
 scaling, background load) concentrates entirely in whichever side ran
 second.
 
-## The three orderings
+## The four orderings
 
 `single` | Runs a single binary, no comparison involved.
 
@@ -28,5 +28,5 @@ introduces state sensitivity between consecutive runs.
 
 ## Reading output
 
-Percentile spread (P75 to P99.9) carries as much information as the
+Percentile spread (P50 to P99.99) carries as much information as the
 mean. Near-identical means with divergent tails is common.

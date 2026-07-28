@@ -1,70 +1,58 @@
 # Commands
 
-These are reference for every `.env` variable BenchWire reads.
+These are reference for every `config.yaml` variable BenchWire reads.
 Two groups: 
 
-1. **Shared** | Required. Apply regardless of mode.
-2. **Per-mode** | Only used in the mentioned mode.
+1. **Required** | Apply regardless of mode.
+2. **Targets** | A list with one entry per binary being benchmarked.
 
-## Shared
+## Required
 
-| Variable | Meaning | Example |
+| Key | Meaning | Example |
 |---|---|---|
-| `RUNS` | Number of runs per side (compare mode runs this many for *each* side, not total). | `RUNS=5` |
-| `METHODOLOGY` | `single`, `sequential`, `cycling`, or `random interleaving`. | `METHODOLOGY="random interleaving"` |
-| `COOLDOWNTIMER` | Milliseconds slept between runs. | `COOLDOWNTIMER=1` |
-| `LABEL` | Legend label, single mode only. | `LABEL="Raw"` |
+| `runs` | Number of runs per target (compare mode runs this many for *each* target, not total). | `runs: 20` |
+| `methodology` | `single`, `sequential`, `cycling`, or `random interleaving`. | `methodology: "random interleaving"` |
+| `cooldownTimer` | Milliseconds slept between runs. | `cooldownTimer: 5` |
+| `targets` | A list of targets. One entry for single mode, two for any compare mode. | see below |
 
-## Single mode
+## Targets
 
-| Variable | Meaning | Example |
+| Key | Meaning | Example |
 |---|---|---|
-| `EXEGESISBIN` | Path to the exegesis binary. | `EXEGESISBIN="$HOME/projects/llvm-project/build/bin/llvm-exegesis"` |
-| `--flag=value` | Any exegesis flag, no suffix, passed straight through. | `--mcpu=native` |
+| `label` | Legend label used in plots and reports. | `label: "Raw"` |
+| `binPath` | Path to the exegesis binary. Supports `$VAR`-style env expansion. | `binPath: "$HOME/projects/llvm-project/build-raw/bin/llvm-exegesis"` |
+| `flags` | A list of raw exegesis flags, passed straight through. | `flags: --mcpu=native` |
 
-## Compare modes | A side
+Single `methodology` uses one `targets` entry. Any compare mode (`sequential`, `cycling`, `random interleaving`) uses two.
 
-| Variable | Meaning | Example |
-|---|---|---|
-| `EXEGESISBINA` | Path to the first binary being compared. | `EXEGESISBINA="$HOME/projects/llvm-project/build-raw/bin/llvm-exegesis"` |
-| `LABELA` | Legend label for A. | `LABELA="Raw"` |
-| `--flagA=value` | Any exegesis flag, suffixed `A`. | `--mcpuA=native` |
+## Exegesis flag passthrough
 
-## Compare modes | B side
+Every string in a target's `flags` list gets forwarded to the exegesis binary as-is.
+Currently, only --mode=latency is supported. Further mode support is being persued.
+To find the commands available with llvm-exegesis use `--help`.
+BenchWire doesn't hardcode or validate flag names except for: `--benchmarks-file`. 
+BenchWire generates this one itself per run, so don't set it manually. This will
+be customizable in the future.
 
-| Variable | Meaning | Example |
-|---|---|---|
-| `EXEGESISBINB` | Path to the second binary being compared. | `EXEGESISBINB="$HOME/projects/llvm-project/build-symbolic/bin/llvm-exegesis"` |
-| `LABELB` | Legend label for B. | `LABELB="libpfm"` |
-| `--flagB=value` | Any exegesis flag, suffixed `B`. | `--mcpuB=native` |
+## Full example `config.yaml`
 
-## Exegesis raw flag passthrough
+```yaml
+methodology: "random interleaving"
+runs: 100
+cooldownTimer: 5
 
-Any line starting with `--` gets forwarded to the exegesis binary as-is.
-This isn't a fixed list. `--mcpu`, `--mode`, `--opcode-name` are the ones with
-support currently. To find the commands available with llvm-exegesis use `--help`.
-BenchWire doesn't hardcode or validate flag names. 
+targets:
+  - label: "Build A"
+    binPath: "$HOME/llvm-project/buildA/bin/llvm-exegesis"
+    flags:
+      - --mcpu=native
+      - --mode=latency
+      - --opcode-name=ADD64rr
 
-One exception: `--benchmarks-files` is filtered out even if present.
-BenchWire generates this one itself per run, so don't set it manually.
-This will be customizable in the future.
-
-## Full example `.env`
-
-```
-EXEGESISBINA="$HOME/projects/llvm-project/build-raw/bin/llvm-exegesis"
-RUNS=5
---mcpuA=native
---modeA=latency
---opcode-nameA=ADD64rr
-LABELA="Raw"
-
-EXEGESISBINB="$HOME/projects/llvm-project/build-symbolic/bin/llvm-exegesis"
---mcpuB=native
---modeB=latency
---opcode-nameB=ADD64rr
-LABELB="libpfm"
-
-METHODOLOGY="random interleaving"
-COOLDOWNTIMER=5
+  - label: "Build B"
+    binPath: "$HOME/llvm-project/buildB/bin/llvm-exegesis"
+    flags:
+      - --mcpu=native
+      - --mode=latency
+      - --opcode-name=ADD64rr
 ```
