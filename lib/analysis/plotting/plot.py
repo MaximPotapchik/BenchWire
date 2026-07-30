@@ -1,3 +1,4 @@
+import math
 import matplotlib.pyplot as plt
 import numpy as np 
 
@@ -38,14 +39,20 @@ class BasePlot:
         if ylabel:
             self.AddArg("set_ylabel", ylabel)
         if legend:
-            self.AddArg("legend")
+            self.AddArg("legend", fontsize=plt.rcParams["font.size"] * 0.75)
         return self
 
     # Expects same amount of runs in comparison which is hardcoded anyways.
     def CleanXValues(self):
         runs = self.stats[0].GetRuns()
-        self.AddArg("set_xticks", list(range(1, runs + 1)))
+        rough = max(runs / 10, 1)
+        magnitude = 10 ** math.floor(math.log10(rough))
+        step = next((s * magnitude for s in [1, 2, 5, 10] if s * magnitude >= rough), 10 * magnitude)
+        step = max(1, int(step))
+        ticks = sorted(set([1] + list(range(step, runs, step)) + [runs]))
+        self.AddArg("set_xticks", ticks)
         self.AddArg("xaxis.set_major_formatter", "{x:.0f}")
+        self.AddArg("ticklabel_format", axis="y", useOffset=False, style="plain")
 
     def ThemeLegend(self):
         legend = self.ax.get_legend()
@@ -80,6 +87,8 @@ class PlotGrid:
         self.fig, self.axes = plt.subplots(rows, cols, figsize=figsize, squeeze=False, layout="constrained")
         self.theme = theme
         self.plots = []
+        self.origWidth = figsize[0]
+        self.origHeight = figsize[1]
 
     # TODO: Auto-layout the plots instead of hardcoding the row/cols.
     def Add(self, plot, statName, row, col):
@@ -92,6 +101,12 @@ class PlotGrid:
     def AddTimestamp(self, timestamp):
         self.fig.text(0.99, 0.98, timestamp, ha="right", va="top", fontsize=8, color=self.theme["text"])
         return self
+
+    def SetPadding(self, extraRight=1.5):
+        newWidth = self.origWidth + extraRight
+        self.fig.set_size_inches(newWidth, self.origHeight)
+        self.fig.get_layout_engine().set(rect=(0, 0, self.origWidth / newWidth, 1))
+        return self
     
     def Render(self):
         for plot, statName in self.plots:
@@ -99,4 +114,4 @@ class PlotGrid:
         return self.fig
 
     def Save(self, path, name):
-        self.fig.savefig(f"{path}/{name}", dpi=200)
+        self.fig.savefig(f"{path}/{name}", dpi=175)
