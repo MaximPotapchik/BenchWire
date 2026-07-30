@@ -100,9 +100,6 @@ You'll be asked to pick option 1 (use `config.yaml`) or option 2 (enter flags
 at the prompt). Option 2 is currently disabled via Go. For more information, 
 see [`docs/known-issues.md`](docs/known-issues.md).
 
-Currently, this only supports `--mode=latency`. Support for further modes is
-being being built.
-
 Results land in `results/yaml/` (raw exegesis output per run) and 
 `results/plots/` (a plot + a markdown stats summary, timestamped). 
 

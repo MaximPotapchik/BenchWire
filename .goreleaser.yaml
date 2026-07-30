@@ -27,3 +27,6 @@ checksum:
 
 changelog:
   sort: asc
+  filters:
+    exclude:
+      - '^Merge pull request'

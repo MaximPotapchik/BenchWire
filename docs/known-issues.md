@@ -7,13 +7,9 @@ Current gaps in the implementation.
 Currently, custom command invocation via cli after `./benchwire` is disabled.
 Support will be introduced in the future.
 
-## `analyze.py` only understands latency mode output
-
-This is being worked on.
-
 ## No resume support
 
-If a run batch is interrupted partway through, the partial yaml files stay in
+If a batch is interrupted partway through, the partial yaml files stay in
 `results/yaml/`. The next invocation deletes or overwrites them and starts over
 from zero, there's no resume.
 

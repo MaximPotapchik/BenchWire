@@ -28,7 +28,7 @@ Single `methodology` uses one `targets` entry. Any compare mode (`sequential`, `
 ## Exegesis flag passthrough
 
 Every string in a target's `flags` list gets forwarded to the exegesis binary as-is.
-Currently, only --mode=latency is supported. Further mode support is being persued.
+Only `--mode=analysis` is not supported. Further mode support is being pursued.
 To find the commands available with llvm-exegesis use `--help`.
 BenchWire doesn't hardcode or validate flag names except for: `--benchmarks-file`. 
 BenchWire generates this one itself per run, so don't set it manually. This will
