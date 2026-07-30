@@ -4,13 +4,14 @@ from .stats import StatsResult
 from .aggregator import Aggregate
 from .presets.llvm_exegesis.markdown import ExegesisMarkdown
 from .presets.llvm_exegesis.plots import ExegesisPlot
-from .presets.llvm_exegesis.statpreset import GetStaticStats
+from .presets.llvm_exegesis.statpreset import GetStaticStats, GetMeasurementPreset
 
 def Pipeline(fullArgs, outputLocation):
     targetCnt = len(fullArgs["targets"][:2])
     labels = [target['label'] for target in fullArgs['targets']]
-
-    aggregated = Aggregate(fullArgs["runs"], GetStaticStats(), labels) 
+    
+    exegesisPreset = [GetStaticStats(), GetMeasurementPreset()]
+    aggregated = Aggregate(fullArgs["runs"], exegesisPreset, labels) 
 
     # Output Directory
     plotDir = os.path.join(outputLocation, "results", "plots")
