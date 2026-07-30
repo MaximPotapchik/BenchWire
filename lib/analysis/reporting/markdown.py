@@ -10,7 +10,7 @@ class MarkdownReporter(DocumentReporter):
         return header + "\n"
 
     def RenderPlotRef(self):
-        return f'<img src="{self.plotFile}" width="600">\n\n' if self.plotFile else ""
+        return f'<img src="{self.plotFile}" width="100%">\n\n' if self.plotFile else ""
 
     def RenderStatLine(self, label, valueA, valueB, diff):
         if valueB is None:

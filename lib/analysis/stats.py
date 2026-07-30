@@ -30,6 +30,10 @@ class StatsResult:
     def Diff(self, valueA, valueB):
         denom = (valueA + valueB) / 2
         return abs(valueB - valueA) / denom * 100 if denom else None
+    
+    def IsAllZero(self, stat):
+        values = self.GetStat(stat)
+        return np.isclose(np.sum(values), 0)
 
     # Add new statistical calculations here.
     def Mean(self, stat):
@@ -50,7 +54,7 @@ class StatsResult:
    
     def CoefficientofV(self, stat):
         mean = self.Mean(stat)
-        return self.StandardDeviation(stat) / mean * 100 if mean else None
+        return self.StandardDeviation(stat) / mean * 100 if mean is not None and mean != 0 else None
 
     def Range(self, stat):
         minV, maxV = self.Min(stat), self.Max(stat)
