@@ -5,6 +5,7 @@ Two groups:
 
 1. **Required** | Apply regardless of mode.
 2. **Targets** | A list with one entry per binary being benchmarked.
+2. **Cooldown** | A list of cooldown options.
 
 ## Required
 
@@ -12,8 +13,8 @@ Two groups:
 |---|---|---|
 | `runs` | Number of runs per target (compare mode runs this many for *each* target, not total). | `runs: 20` |
 | `methodology` | `single`, `sequential`, `cycling`, or `random interleaving`. | `methodology: "random interleaving"` |
-| `cooldownTimer` | Milliseconds slept between runs. | `cooldownTimer: 5` |
-| `targets` | A list of targets. One entry for single mode, two for any compare mode. | see below |
+| `cooldownTimer` | The amount of time in between runs. Can be randomized with an interval. See [Cooldown](#Cooldown).  | `cooldownTimer: "5ms"` |
+| `targets` | A list of targets. One entry for single mode, two for any compare mode. | See [Targets](#targets)|
 
 ## Targets
 
@@ -24,6 +25,18 @@ Two groups:
 | `flags` | A list of raw exegesis flags, passed straight through. | `flags: --mcpu=native` |
 
 Single `methodology` uses one `targets` entry. Any compare mode (`sequential`, `cycling`, `random interleaving`) uses two.
+
+## Cooldown
+
+| Key | Meaning | Example |
+|---|---|---|
+| `randomizeWithin` | Upper bound of the random range. | `randomizeWithin: 5` |
+| `precision` | Unit for `randomizeWithin`. `us`, `ms` or `s`. | `precision: "ms"` |
+
+This allows simulation of instability by randomzing sleep within the minimum allowed
+by the operating system, and your number.
+
+Example: `cooldownTimer: {randomizeWithin: 5, precision: "ms"}`
 
 ## Exegesis flag passthrough
 
@@ -39,7 +52,7 @@ be customizable in the future.
 ```yaml
 methodology: "random interleaving"
 runs: 100
-cooldownTimer: 5
+cooldownTimer: "5ms"
 
 targets:
   - label: "Build A"

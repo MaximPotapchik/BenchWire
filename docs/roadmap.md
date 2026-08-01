@@ -77,15 +77,6 @@ The ability to create custom chains of targets in `config.yaml`. The
 
 - Report customization. Allowing the use of different output formats.
 
-## Run progress and ETA
- 
-Tracking progress in a bar and estimation. This can be for both the automation,
-and the analysis layers.
-
-```
-[===========                    ] 34% (340/1000) | avg 42ms/run | ETA 27s
-```
- 
 ## Also under consideration
  
 - `CI` | The goal is to have this tool be used as CI for itself. Benchmarking
