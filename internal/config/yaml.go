@@ -11,7 +11,7 @@ import (
 type YamlConfig struct {
 	Methodology string `yaml:"methodology"`
 	Runs int `yaml:"runs"`
-	CooldownTimer int `yaml:"cooldownTimer"`
+	CooldownTimer CooldownTimer `yaml:"cooldownTimer"`
 	Targets []Target `yaml:"targets"`
 }
 
@@ -19,6 +19,40 @@ type Target struct {
 	Label string `yaml:"label"`
 	BinPath string `yaml:"binPath"`
 	Flags []string `yaml:"flags"`
+}
+
+type CooldownTimer struct {
+	Value      string
+	Randomized bool
+}
+
+func (c *CooldownTimer) UnmarshalYAML(value *yaml.Node) error {
+	switch value.Kind {
+		case yaml.ScalarNode:
+			var raw string
+			if err := value.Decode(&raw); err != nil {
+				return err
+			}
+
+			c.Value = raw
+			c.Randomized = false
+			return nil
+
+		case yaml.MappingNode:
+			var obj struct {
+				RandomizeWithin int    `yaml:"randomizeWithin"`
+				Precision       string `yaml:"precision"`
+			}
+
+			if err := value.Decode(&obj); err != nil {
+				return err
+			}
+
+			c.Value = fmt.Sprintf("%d%s", obj.RandomizeWithin, obj.Precision)
+			c.Randomized = true
+			return nil
+	}
+	return fmt.Errorf("cooldownTimer: unsupported yaml syntax.")
 }
 
 func LoadYamlConfig(targetDir string) (*YamlConfig, error) {
@@ -43,7 +77,7 @@ func LoadYamlConfig(targetDir string) (*YamlConfig, error) {
 
 	for i := range data.Targets {
 		data.Targets[i].BinPath = os.ExpandEnv(data.Targets[i].BinPath)
-	}
+	}	
 	
 	return &data, nil
 }

@@ -52,10 +52,10 @@ func main() {
 
 			opts := runner.RunArgs {
 				Methodology: cfg.Methodology,
-				Runs:        cfg.Runs,
-				CooldownMs:  cfg.CooldownTimer,
-				OutputDir:   outputDir,
-				Targets:     cfg.Targets,
+				Runs: cfg.Runs,
+				Cooldown: cfg.CooldownTimer,
+				OutputDir: outputDir,
+				Targets: cfg.Targets,
 			}
 			
 			if err := runner.Run(opts); err != nil {
