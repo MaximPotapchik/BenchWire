@@ -1,0 +1,77 @@
+default:
+  methodology: "single"
+  runs: 50
+  cooldownTimer: "5ms"
+
+globalFlags:
+  - --mcpu=native
+
+presets:
+  - name: Vex
+    flags: [--opcode-name=VEXTRACTF128rri]
+  - name: Add64 
+    flags: [--opcode-name=ADD64rr]
+
+specMatrix:
+  - name: "VEXTRACTF128rri FPU pipe quick check"
+    benchmarker: "llvm-exegesis"
+    methodology: "sequential"
+    runs: 20
+
+    localFlags:
+      - --mode=uops
+
+    presets:
+      - name: VexLowMin
+        inherit: [Vex]
+        flags: [--min-instructions=5000]
+
+    targets:
+      - label: "build1"
+        binPath: "TestBin1"
+        preset: [VexLowMin]
+
+      - label: "build2"
+        binPath: "TestBin2"
+        preset: [VexLowMin]
+        flags:
+          - --validation-counter=l1d-cache
+
+    sequence:
+        - build1
+        - build2
+        - [build1, build2]
+
+
+  - name: "VEXTRACTF128rri FPU pipe full validation"
+    benchmarker: "llvm-exegesis"
+    methodology: "random interleaving"
+    runs: 100
+
+    localFlags:
+      - --mode=uops
+
+    presets:
+      - name: VexHighMin
+        inherit: [Vex]
+        flags: [--min-instructions=20000]
+
+    targets:
+      - label: "build1"
+        binPath: "TestBin1"
+        preset: [VexHighMin]
+
+      - label: "build2"
+        binPath: "TestBin2"
+        preset: [VexHighMin]
+        flags:
+          - --validation-counters=l1d
+
+    sequence:
+        - build1
+        - build2
+        - [build1, build2]
+
+matrixSequence:
+  - "VEXTRACTF128rri FPU pipe full validation"
+  - "VEXTRACTF128rri FPU pipe quick check"

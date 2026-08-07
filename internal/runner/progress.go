@@ -14,6 +14,7 @@ type ProgressBar struct {
 	CooldownSum int64
 	EstimatedETA int
 	Percent int
+	CurrentSpecMatrix string
 }
 
 type RunTiming struct {
@@ -23,8 +24,9 @@ type RunTiming struct {
 	Reading int64
 }
 
-func (p *ProgressBar) Tick(run int, start, end int64, cooldownNs int64) {
+func (p *ProgressBar) Tick(run int, start, end int64, cooldownNs int64, specMatrix string) {
 	reading := UpdateProgress(run, start, end)
+	p.CurrentSpecMatrix = specMatrix
 	p.RunNumber = run
 	p.RunningSum += reading
 	p.CapturedTimes = append(p.CapturedTimes, RunTiming{Run: run, TimerStart: start, TimerEnd: end, Reading: reading})
@@ -43,7 +45,9 @@ func (p *ProgressBar) Tick(run int, start, end int64, cooldownNs int64) {
     avgCooldownMs := float64(p.CooldownSum) / float64(run) / 1000000
     p.EstimatedETA = (p.TotalRuns - run) * int(runningAvg + avgCooldownMs) / 1000
 
-	fmt.Printf("[%s%s] %d%% (%d/%d) | avg %.2fms/run | ETA %ds \r", filled, empty, p.Percent, run, p.TotalRuns, runningAvg, p.EstimatedETA)
+	fmt.Printf("[%s%s] %d%% (%d/%d) | avg %.2fms/run | ETA %ds | specMatrix: %s \r", filled,
+			   empty, p.Percent, run, p.TotalRuns, runningAvg, p.EstimatedETA,
+			   p.CurrentSpecMatrix)
 }
 
 func GetTime() int64 {
