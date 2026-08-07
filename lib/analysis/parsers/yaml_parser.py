@@ -42,11 +42,11 @@ def ExtractStats(targetStats, data):
     return extractedStats
 """
 
-def YamlRunParser(prefix, run):
+def YamlRunParser(specMatrix, label, prefix, run):
     rootDir = FindRootDirectory("BenchWire") 
     yamlDir = os.path.join(rootDir, "results", "yaml")
     
-    path = os.path.join(yamlDir, f"{prefix}run_{run}.yaml")
+    path = os.path.join(yamlDir, f"{specMatrix}_{label}_{prefix}run{run}.yaml")
     with open(path) as f:
         stats = yaml.safe_load(f)
     
@@ -58,6 +58,6 @@ def YamlConfigParser():
 
     with open(configLoc) as f:
         config = yaml.safe_load(f)
-
+    
     return config
 

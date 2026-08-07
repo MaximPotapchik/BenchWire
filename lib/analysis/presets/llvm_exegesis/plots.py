@@ -14,7 +14,7 @@ def ExegesisPlot(stats, fullArgs, targetCnt, outputDir, timestamp):
             trackedStats.append(val)
 
     n = len(trackedStats)
-    name = f"plot_{timestamp}.png"
+    name = f"plot{timestamp[0]}_{timestamp[1]}.png"
     
     def buildPlot(val):
         if targetCnt > 1:
@@ -32,7 +32,7 @@ def ExegesisPlot(stats, fullArgs, targetCnt, outputDir, timestamp):
 
     if n == 1:
         plot = buildPlot(trackedStats[0])
-        plot.AddTimestamp(timestamp)
+        plot.AddTimestamp(timestamp[1])
         plot.Render(trackedStats[0])
         plot.Save(outputDir, name)
         return name
@@ -47,7 +47,7 @@ def ExegesisPlot(stats, fullArgs, targetCnt, outputDir, timestamp):
         col = i % cols
         grid.Add(buildPlot(val), val, row, col)
 
-    grid.AddTimestamp(timestamp)
+    grid.AddTimestamp(timestamp[1])
     grid.SetPadding(0.7)
     grid.Render()
     grid.Save(outputDir, name)
