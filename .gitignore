@@ -1,8 +1,9 @@
 config.yaml
 
 # Output directories
-results/yaml/*
-results/plots/*
+results/*
+results/examples/
+results/emamples/**
 
 # Go build
 dist/
