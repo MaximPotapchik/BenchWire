@@ -46,6 +46,11 @@ class DocumentReporter(Reporter):
         self.plotFile = path
         return self
 
+    def AppendReport(self, renderedContent):
+        self.lines.append(("report", renderedContent))
+        return self
+    
+    # This dispatches to the deriving class, to call render header, appending the output.
     def Render(self, title, mode, timestamp, **fields):
         output = self.RenderHeader(title, mode, timestamp, **fields) + self.RenderPlotRef()
         
@@ -56,6 +61,8 @@ class DocumentReporter(Reporter):
             elif line[0] == "table":
                 _, table = line
                 output += self.RenderTable(table)
+            elif line[0] == "report":
+                output += line[1] + "\n"
             else:
                 _, content = line
                 output += self.RenderLines(content)
