@@ -1,21 +1,84 @@
-methodology: "single"
-runs: 50
-cooldownTimer: 20
+default:
+  methodology: "single"
+  runs: 50
+  cooldownTimer: "5ms"
 
-targets:
-  - label: "Label"
-    binPath: "Add your binary path here"
-    flags:
-      - --mcpu=native
-      - --mode=latency
-      - --opcode-name=ADD64rr
+globalFlags:
+  - --mcpu=native
 
-# If you would like to compare binaries, swap methodology to 1 of the three
-# comparison ones listed in docs/commands.md.
-#  - label: "LabelB"
-#    binPath: "Add your binary path here"
-#    flags:
-#      - --mcpu=native
-#      - --mode=latency
-#      - --opcode-name=ADD64rr
+presets:
+  - name: Vex
+    flags: [--opcode-name=VEXTRACTF128rri]
+  - name: Add64
+    flags: [--opcode-name=ADD64rr]
 
+specMatrix:
+  - name: "VEXQuick"
+    benchmarker: "llvm-exegesis"
+    methodology: "sequential"
+    runs: 10
+    cooldownTimer: {randomizeWithin: 10, precision: "ms"}
+    localFlags:
+      - --mode=uops
+
+    presets:
+      - name: VexLowMin
+        inherit: [Vex]
+        flags: [--min-instructions=5000]
+
+    targets:
+      - label: "build1"
+        binPath: "Add your binary path here"
+        preset: [VexLowMin]
+
+      - label: "build2"
+        binPath: "Add your binary path here"
+        preset: [VexLowMin]
+        flags:
+          - --repetition-mode=duplicate
+
+    sequence:
+        - build1
+      # - build2
+      # - [build1, build2]
+
+# If you'd like a second specMatrix in the same run, uncomment this block
+# and add its name to matrixSequence below. See docs/commands.md.
+#  - name: "VEXFull"
+#    benchmarker: "llvm-exegesis"
+#    methodology: "random interleaving"
+#    runs: 100
+#
+#    localFlags:
+#      - --mode=uops
+#
+#    presets:
+#      - name: VexHighMin
+#        inherit: [Vex]
+#        flags: [--min-instructions=20000]
+#
+#    targets:
+#      - label: "build1"
+#        binPath: "Add your binary path here"
+#        preset: [VexHighMin]
+#
+#      - label: "build2"
+#        binPath: "Add your binary path here"
+#        preset: [VexHighMin]
+#        flags:
+#          - --repetition-mode=duplicate
+#
+#    sequence:
+#        - build1
+#        - build2
+#        - [build1, build2]
+
+matrixSequence:
+  - "VEXQuick"
+  # - "VEXFull"
+
+analysis:
+  output:
+  # dirName: "reports" # Can be empty. Overrides defaulting naming scheme.
+    layout: "directory" # Or "single file"
+    per: "suite" # Or "specMatrix" or "run"
