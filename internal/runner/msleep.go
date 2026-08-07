@@ -23,6 +23,8 @@ func msleep(cooldown config.CooldownTimer) (int64, error) {
 	}
 
 	switch precision {
+		case "us":
+			duration *= 1_000
 		case "ms":
 			duration *= 1_000_000
 		case "s":
