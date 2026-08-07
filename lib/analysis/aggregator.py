@@ -96,8 +96,8 @@ def FillStatArrays(statList, collectedStats, parsedData, run, labelCnt, isInitia
 
 # TODO: - Algorithm can be made more efficient.
 # - Needs to sample both sides.
-def FillStats(preset, measurementPreset, runs, labels, labelCnt):
-    checkParsedStats = Selector([FORMATS.yaml], 1, labels)
+def FillStats(preset, measurementPreset, runs, matrixName, labels, labelCnt):
+    checkParsedStats = Selector([FORMATS.yaml], 1, matrixName, labels)
     checkParsedData = checkParsedStats.get("data", {})
     checkData = checkParsedData["yamlA"] if labelCnt else checkParsedData["yaml"]
 
@@ -114,7 +114,7 @@ def FillStats(preset, measurementPreset, runs, labels, labelCnt):
     isInitialized = False
 
     for run in range(1, runs + 1):
-        parsedStats = Selector([FORMATS.yaml], run, labels)
+        parsedStats = Selector([FORMATS.yaml], run, matrixName, labels)
         parsedData = parsedStats.get("data", {})
         ran = FillStatArrays(statList, collectedStats, parsedData, run, labelCnt, isInitialized, measurementPreset)
         isInitialized = ran
@@ -122,10 +122,10 @@ def FillStats(preset, measurementPreset, runs, labels, labelCnt):
     return statList
 
 # This builds the stat value arrays.
-def Aggregate(runs, preset, labels):
+def Aggregate(runs, preset, matrixName, labels):
     staticPreset, measurementPreset = preset
     labelCnt = len(labels) > 1
-    statList = FillStats(staticPreset, measurementPreset, runs, labels, labelCnt)
+    statList = FillStats(staticPreset, measurementPreset, runs, matrixName, labels, labelCnt)
         
     allStats = {}
 

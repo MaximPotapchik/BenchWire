@@ -72,7 +72,7 @@ def BuildMarkdownReport(stats, methodology, summary, targetCnt, trackedStats):
 
     return r, opcode, mode 
 
-def ExegesisMarkdown(stats, fullArgs, targetCnt, outputDir, timestamp, plotFile):
+def ExegesisMarkdown(stats, fullArgs, targetCnt, outputDir, timestamp, plotFile, combine=None, finalized=None):
     
     summary = [
         ("Mean", "Mean", ""),
@@ -95,7 +95,15 @@ def ExegesisMarkdown(stats, fullArgs, targetCnt, outputDir, timestamp, plotFile)
 
 
     r.SetPlotFile(plotFile)
-    content = r.Render(opcode, mode, timestamp)
-    name = f"report_{timestamp}.md"
+    content = r.Render(opcode, mode, timestamp[1])
+    name = f"report{timestamp[0]}_{timestamp[1]}.md"
+    
+    if combine is not None:
+        combine.AppendReport(content)
+        if finalized is not None:
+            title, name = finalized
+            combine.Save(outputDir, name, combine.Render(title, "", timestamp[1]))
+        return content
+
     r.Save(outputDir, name, content)
     return content
