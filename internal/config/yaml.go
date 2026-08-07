@@ -8,21 +8,49 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
+// conig structs are followed by their unmarshalling method.
+
 type YamlConfig struct {
+	Default Default `yaml:"default"`
+	GlobalFlags []string `yaml:"globalFlags"`
+	Presets []Preset `yaml:"presets"`
+	SpecMatrix []SpecMatrix `yaml:"specMatrix"`
+	MatrixSequence []string `yaml:"matrixSequence"`
+}
+
+type Default struct {
+	Methodology string `yaml:"methodology"`
+	Runs int `yaml:"runs"`
+	CooldownTimer CooldownTimer `yaml:"cooldownTimer"`	
+}
+
+type SpecMatrix struct {
+	Name string `yaml:"name"`
+	Benchmarker string `yaml:"benchmarker"`
 	Methodology string `yaml:"methodology"`
 	Runs int `yaml:"runs"`
 	CooldownTimer CooldownTimer `yaml:"cooldownTimer"`
+	LocalFlags []string `yaml:"localFlags"`
+	Presets []Preset `yaml:"presets"`
 	Targets []Target `yaml:"targets"`
+	Sequence Sequence `yaml:"sequence"`
+}
+
+type Preset struct {
+	Name string `yaml:"name"`
+	Inherit []string `yaml:"inherit,omitempty"`
+	Flags []string `yaml:"flags"`
 }
 
 type Target struct {
 	Label string `yaml:"label"`
 	BinPath string `yaml:"binPath"`
+	Preset []string `yaml:"preset,omitempty"`
 	Flags []string `yaml:"flags"`
 }
 
 type CooldownTimer struct {
-	Value      string
+	Value string
 	Randomized bool
 }
 
@@ -40,8 +68,8 @@ func (c *CooldownTimer) UnmarshalYAML(value *yaml.Node) error {
 
 		case yaml.MappingNode:
 			var obj struct {
-				RandomizeWithin int    `yaml:"randomizeWithin"`
-				Precision       string `yaml:"precision"`
+				RandomizeWithin int `yaml:"randomizeWithin"`
+				Precision string `yaml:"precision"`
 			}
 
 			if err := value.Decode(&obj); err != nil {
@@ -53,6 +81,36 @@ func (c *CooldownTimer) UnmarshalYAML(value *yaml.Node) error {
 			return nil
 	}
 	return fmt.Errorf("cooldownTimer: unsupported yaml syntax.")
+}
+
+// Sequence parsing for whether it is single or comparison. 
+type Sequence [][]string
+
+func (s *Sequence) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind != yaml.SequenceNode {
+		return fmt.Errorf("sequence: expected a list")
+	}
+	steps := make([][]string, 0, len(value.Content))
+	for _, item := range value.Content {
+		switch item.Kind {
+			case yaml.ScalarNode:
+				var label string
+				if err := item.Decode(&label); err != nil {
+					return err
+				}
+				steps = append(steps, []string{label})
+			case yaml.SequenceNode:
+				var labels []string
+				if err := item.Decode(&labels); err != nil {
+					return err
+				}
+				steps = append(steps, labels)
+			default:
+				return fmt.Errorf("sequence step: unsupported yaml syntax")
+		}
+	}
+	*s = steps
+	return nil
 }
 
 func LoadYamlConfig(targetDir string) (*YamlConfig, error) {
@@ -74,10 +132,12 @@ func LoadYamlConfig(targetDir string) (*YamlConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	for i := range data.Targets {
-		data.Targets[i].BinPath = os.ExpandEnv(data.Targets[i].BinPath)
-	}	
 	
+	for i := range data.SpecMatrix {
+		for j := range data.SpecMatrix[i].Targets {
+			data.SpecMatrix[i].Targets[j].BinPath = os.ExpandEnv(data.SpecMatrix[i].Targets[j].BinPath)
+		}
+	}
+
 	return &data, nil
 }
