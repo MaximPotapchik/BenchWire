@@ -1,9 +1,11 @@
 # BenchWire 
 
-This is an automation harness currently used for [`llvm-exegesis`](https://llvm.org/docs/CommandGuide/llvm-exegesis.html).
+An automated design of experiments system, currently used for [`LLVM-exegesis`](https://llvm.org/docs/CommandGuide/llvm-exegesis.html).
 It runs single or A/B comparison benchmarks automatically, computes statistics,
-and plots the result. The goal is to have a modular framework capable of
-targetting any benchmarker, with continuous integration in mind.
+and plots the result. Rich config customization. The goal is to have a modular,
+extensible framework capable of targetting any benchmarker, with continuous
+integration in mind. Along with making an LLVM-based alternative for uops.info
+tables.
 
 ![example image of plot](results/examples/exampleplot.png)
 
@@ -49,30 +51,30 @@ targetting any benchmarker, with continuous integration in mind.
 
 ### Why?
 
-Currently there are no other LLVM Exegesis automation harnesses in open source.
+Currently there are no other LLVM-exegesis automation harnesses in open source.
 This project looks to allow seamless automation for benchmarking with Exegesis,
 and eventually beyond it.
 
 ## What it does
 
-1. Runs `llvm-exegesis` N times in single mode, or runs two configurations
-head to head in compare mode. This is done automatically after selecting 1 or 2
-after running the command.
+1. Runs `LLVM-exegesis` per `specMatrix`, solo or head-to-head, based
+on that matrix's `sequence`. A single `config.yaml` can define multiple
+independent comparisons in one batch.
 
-2. Compare mode supports three run orderings (sequential, cycling, random
+2. Supports four different run orderings (single, sequential, cycling, random
 interleaving) specifically to control for time-based bias like thermal
 drift and frequency scaling skewing numbers, see [`docs/methodology.md`](docs/methodology.md)
 for why this matters.
 
-3. Parses the outputs and automatically performs statistical analysis
-with the outputs of the target benchmarker.
+3. Parses the benchmarker's outputs and automatically performs statistical 
+analysis on it.
 
-4. Produces a Catppuccin-themed plot and a markdown stats summary
-(mean, median, stddev, CoV, percentiles up to P99.99 + more) for every run.
+4. Produces a Catppuccin-themed plot and a markdown stats summary (mean, 
+median, stddev, CoV, percentiles up to P99.99 + more) for every run.
 
 ## Requirements
 
-- `llvm-exegesis` and its dependencies. 
+- `LLVM-exegesis` and its dependencies. 
 - Bash
 - Python 3
 
@@ -90,18 +92,15 @@ For the full list of `config.yaml` settings, see [`docs/commands.md`](docs/comma
 This will run the setup script, creating the `config.yaml` and populating it with
 `config.example.yaml`.
 Edit `config.yaml` with your binary path(s), along with your desired 
-llvm-exegesis flags, then run:
+LLVM-exegesis flags, then run:
 
 ```bash
 ./benchwire
 ```
 
-You'll be asked to pick option 1 (use `config.yaml`) or option 2 (enter flags
-at the prompt). Option 2 is currently disabled via Go. For more information, 
-see [`docs/known-issues.md`](docs/known-issues.md).
-
-Results land in `results/yaml/` (raw exegesis output per run) and 
-`results/plots/` (a plot + a markdown stats summary, timestamped). 
+Benchmarker results land in `results/yaml/` (raw exegesis output per run) and 
+the analysis lands in the chosen directory (a plot + a markdown stats summary,
+timestamped). 
 
 ## Comparison methodology
 
@@ -133,8 +132,7 @@ and reasoning in [`docs/roadmap.md`](docs/roadmap.md).
 
 ## In progress
 
-Currently being upgraded in capabilities regarding full support for 
-`llvm-exegesis` modes.
+Support for pyperf is being implamented.
 
 ## Contributing
 
