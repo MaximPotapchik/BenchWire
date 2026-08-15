@@ -5,6 +5,11 @@ results/*
 results/examples/
 results/emamples/**
 
+# User built configs
+configs/custom/
+configs/sweep/buckets/
+*configs/sweep/sweep.yaml
+
 # Go build
 dist/
 /benchwire
