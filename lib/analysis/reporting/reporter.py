@@ -69,6 +69,24 @@ class DocumentReporter(Reporter):
 
         return output
 
+    def RenderBody(self):
+        output = self.RenderPlotRef()
+
+        for line in self.lines:
+            if line[0] == "stat":
+                _, label, valueA, valueB, diff = line
+                output += self.RenderStatLine(label, valueA, valueB, diff)
+            elif line[0] == "table":
+                _, table = line
+                output += self.RenderTable(table)
+            elif line[0] == "report":
+                output += line[1] + "\n"
+            else:
+                _, content = line
+                output += self.RenderLines(content)
+
+        return output
+
     def RenderHeader(self): raise NotImplementedError
     def RenderPlotRef(self): raise NotImplementedError
     def RenderStatLine(self, label, valueA, valueB, diff): raise NotImplementedError
