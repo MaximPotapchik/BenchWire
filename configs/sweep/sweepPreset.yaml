@@ -1,0 +1,30 @@
+context:
+    name: "Sweep"
+    mode: "default"
+
+globalFlags:
+  - --mcpu=native
+
+presets:
+  - name: Lat
+    flags: [--mode=latency]
+  - name: Uop 
+    flags: [--mode=uops]
+  - name: Thru
+    flags: [--mode=inverse_throughput]
+
+specMatrix:
+  - name: "Opcode Sweep"
+    benchmarker: "llvm-exegesis"
+    methodology: "single"
+    runs: 50
+    cooldownTimer: "1ms"
+
+analysis:
+  output:
+    dirName: "sweep"
+    storeIn: "single file"
+    per: "suite"
+    plots:
+      disable: true
+

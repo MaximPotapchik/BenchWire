@@ -1,0 +1,43 @@
+globalFlags:
+  - --mcpu=native
+
+presets:
+  - name: Add64 
+    flags: [--opcode-name=ADD64rr]
+
+specMatrix:
+  - name: "ADD64rr Basic"
+    benchmarker: "llvm-exegesis"
+    methodology: "sequential"
+    runs: 50
+    cooldownTimer: "5ms"
+    localFlags:
+      - --mode=uops
+
+    presets:
+      - name: Add64min5k
+        inherit: [Add64]
+        flags: [--min-instructions=5000]
+
+    targets:
+      - label: "build1"
+        binPath: "Bin1"
+        preset: [Add64min5k]
+
+      - label: "build2"
+        binPath: "Bin2"
+        preset: [Add64min5k]
+        flags:
+          - --repetition-mode=duplicate
+
+    sequence:
+        - build1
+        - build2
+        - [build1, build2]
+
+analysis:
+  output:
+    dirName: ""
+    storeIn: "single file"
+    per: "run"
+

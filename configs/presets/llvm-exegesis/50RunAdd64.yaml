@@ -1,0 +1,29 @@
+globalFlags:
+  - --mcpu=native
+
+presets:
+  - name: Add64 
+    flags: [--opcode-name=ADD64rr]
+
+specMatrix:
+  - name: "ADD64rr Basic"
+    benchmarker: "llvm-exegesis"
+    methodology: "single"
+    runs: 50
+    cooldownTimer: "10ms"
+    localFlags:
+      - --mode=uops
+
+    targets:
+      - label: "ADD64"
+        binPath: "Bin1"
+        preset: [Add64]
+
+    sequence:
+        - ADD64
+
+analysis:
+  output:
+    dirName: ""
+    storeIn: "single file"
+    per: "run"
