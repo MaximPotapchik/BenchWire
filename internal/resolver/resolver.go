@@ -27,6 +27,11 @@ type FullPreset struct {
 }
 
 func Resolve(cfg config.YamlConfig) []SpecMatrixTargets {
+	mode := cfg.Context.Mode
+	if mode == "" {
+		mode = "default"
+	}
+
 	defaultMethodology := cfg.Default.Methodology
 	defaultRuns := cfg.Default.Runs
 	defaultCooldownTimer := cfg.Default.CooldownTimer
@@ -84,6 +89,7 @@ func Resolve(cfg config.YamlConfig) []SpecMatrixTargets {
 					}
 				}
 			}
+
 			fullPreset[j].Flags = append(fullPreset[j].Flags, specPresets.Flags...)
 			localPresetName[fullPreset[j].Name] = fullPreset[j].Flags
 		}
@@ -91,15 +97,16 @@ func Resolve(cfg config.YamlConfig) []SpecMatrixTargets {
 		// Populate target flags.
 		resolvedTarget := make([]ResolvedTarget, len(spec.Targets))
 		specMatrixTargets[i].ResolvedTarget = make([]ResolvedTarget, len(spec.Targets))
+
 		for j, target := range spec.Targets{
 			resolvedTarget[j].Label = target.Label
 			resolvedTarget[j].BinPath = target.BinPath
-
 			resolvedTarget[j].Flags = append(resolvedTarget[j].Flags, combinedFlags...)
 
 			for _, preset := range target.Preset {
 				resolvedTarget[j].Flags = append(resolvedTarget[j].Flags, localPresetName[preset]...)
 			}
+
 			resolvedTarget[j].Flags = append(resolvedTarget[j].Flags, target.Flags...)
 			specMatrixTargets[i].ResolvedTarget[j] = resolvedTarget[j]
 		}
