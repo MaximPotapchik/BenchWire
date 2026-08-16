@@ -11,11 +11,19 @@ import (
 // conig structs are followed by their unmarshalling method.
 
 type YamlConfig struct {
+	Context Context `yaml:"context"`
 	Default Default `yaml:"default"`
 	GlobalFlags []string `yaml:"globalFlags"`
 	Presets []Preset `yaml:"presets"`
 	SpecMatrix []SpecMatrix `yaml:"specMatrix"`
 	MatrixSequence []string `yaml:"matrixSequence"`
+	Analysis Analysis `yaml:"analysis"`
+}
+
+type Context struct {
+	Name string `yaml:"name"`
+	Mode string `yaml:"mode"`
+	//Schedule Schedule `yaml:"schedule"`
 }
 
 type Default struct {
@@ -83,6 +91,10 @@ func (c *CooldownTimer) UnmarshalYAML(value *yaml.Node) error {
 	return fmt.Errorf("cooldownTimer: unsupported yaml syntax.")
 }
 
+func (c CooldownTimer) MarshalYAML() (interface{}, error) {
+	return c.Value, nil
+}
+
 // Sequence parsing for whether it is single or comparison. 
 type Sequence [][]string
 
@@ -113,11 +125,30 @@ func (s *Sequence) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-func LoadYamlConfig(targetDir string) (*YamlConfig, error) {
-	path := filepath.Join(targetDir, "config.yaml")
+type Analysis struct {
+	Output AnalysisOutput `yaml:"output"`
+}
+
+type AnalysisOutput struct {
+	DirName string `yaml:"dirName"`
+	StoreIn string `yaml:"storeIn"`
+	Per string `yaml:"per"`
+	Plots Plots `yaml:"plots"`
+}
+
+type Plots struct {
+	Disable bool `yaml:"disable"`
+}
+
+func LoadYamlConfig(targetDir string, filename ...string) (*YamlConfig, error) {
+	name := "config.yaml"
+	if len(filename) > 0 {
+		name = filename[0]
+	}
+	path := filepath.Join(targetDir, name)
 	
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return nil, fmt.Errorf("no config.yaml found, copy exampleconfig.yaml to config.yaml and fill it in")
+		return nil, fmt.Errorf("no config found for path: %s", path)
 	}
 
 	file, err := os.Open(path)
