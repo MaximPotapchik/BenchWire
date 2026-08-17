@@ -45,8 +45,8 @@ func (p *ProgressBar) Tick(run int, start, end int64, cooldownNs int64, specMatr
     avgCooldownMs := float64(p.CooldownSum) / float64(run) / 1000000
     p.EstimatedETA = (p.TotalRuns - run) * int(runningAvg + avgCooldownMs) / 1000
 
-	fmt.Printf("[%s%s] %d%% (%d/%d) | avg %.2fms/run | ETA %ds | specMatrix: %s \r", filled,
-			   empty, p.Percent, run, p.TotalRuns, runningAvg, p.EstimatedETA,
+	fmt.Printf("[%s%s] %d%% (%d/%d) | avg %.2fms/run | ETA %s | specMatrix: %s \r", filled,
+			   empty, p.Percent, run, p.TotalRuns, runningAvg, FormatETA(p.EstimatedETA),
 			   p.CurrentSpecMatrix)
 }
 
@@ -74,6 +74,23 @@ func UpdateProgress(run int, startTime int64, endTime int64) int64 {
 	timing.Reading = CaptureRunTime(timing.TimerStart, timing.TimerEnd)
 
 	return timing.Reading
+}
+
+func FormatETA(totalSeconds int) string {
+	hours := totalSeconds / 3600
+	minutes := (totalSeconds % 3600) / 60
+	seconds := totalSeconds % 60
+
+	out := ""
+	if hours > 0 {
+		out += fmt.Sprintf("%dH ", hours)
+	}
+	if minutes > 0 {
+		out += fmt.Sprintf("%dM ", minutes)
+	}
+	out += fmt.Sprintf("%dS", seconds)
+
+	return out
 }
 
 func GetTotalTimeSpent(bar ProgressBar) int64 {
