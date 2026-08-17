@@ -1,20 +1,6 @@
 import os
 import yaml
-
-# TODO: Move this to its own file. root_finder.py or something.
-# grabs yaml location 
-def FindRootDirectory(rootDirName):
-    currentDir = os.path.dirname(os.path.abspath(__file__))
-
-    while True:
-        if os.path.basename(currentDir) == rootDirName:
-            return currentDir
-
-        parentDir = os.path.dirname(currentDir)
-        if parentDir == currentDir:
-            raise FileNotFoundError("BenchWire directory not found.")
-
-        currentDir = parentDir
+from .root_finder import FindRootDirectory
 
 # This is an example stat extractor. Not used anymore. 
 """
@@ -52,12 +38,13 @@ def YamlRunParser(specMatrix, label, prefix, run):
     
     return stats
 
-def YamlConfigParser():
+def YamlConfigParser(configPath=None):
     rootDir = FindRootDirectory("BenchWire")
-    configLoc = os.path.join(rootDir, "config.yaml")
 
-    with open(configLoc) as f:
+    if configPath is None:
+        configPath = os.path.join(rootDir, "config.yaml")
+
+    with open(configPath) as f:
         config = yaml.safe_load(f)
-    
-    return config
 
+    return config
