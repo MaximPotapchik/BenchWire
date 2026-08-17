@@ -1,3 +1,7 @@
+context:
+    name: "config"
+    mode: ""
+
 default:
   methodology: "single"
   runs: 50

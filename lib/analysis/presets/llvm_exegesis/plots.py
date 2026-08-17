@@ -4,6 +4,7 @@ from lib.analysis.plotting.theme import mocha
 from .statpreset import GetTrackedStats
 
 def ExegesisPlot(stats, fullArgs, targetCnt, outputDir, timestamp):
+
     firstStats = stats[0] if targetCnt > 1 else stats
     allTrackedStats = GetTrackedStats(firstStats)
 
@@ -28,7 +29,11 @@ def ExegesisPlot(stats, fullArgs, targetCnt, outputDir, timestamp):
         ylabel = "Uops" if mode == "uops" else "Cycles"
         plot.SetLabels(title=val.split(":")[0], xlabel="N of runs", ylabel=ylabel)
         plot.CleanXValues()
+
         return plot
+    
+    if n == 0:
+        return None
 
     if n == 1:
         plot = buildPlot(trackedStats[0])
@@ -51,4 +56,5 @@ def ExegesisPlot(stats, fullArgs, targetCnt, outputDir, timestamp):
     grid.SetPadding(0.7)
     grid.Render()
     grid.Save(outputDir, name)
+
     return name

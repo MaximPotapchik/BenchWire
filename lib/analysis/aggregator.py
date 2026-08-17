@@ -1,6 +1,8 @@
 import numpy as np
 from .parsers.selector import Selector, FORMATS
 
+# TODO: This needs comments. It's pretty hard to understand.
+
 def GetAllKeys(d, skipCollection=None):
     for key, value in d.items():
         if key == skipCollection:
@@ -15,24 +17,26 @@ def GetAllKeys(d, skipCollection=None):
                 if isinstance(item, dict):
                     yield from GetAllKeys(item, skipCollection)
             
-def ExtractMeasurementStats(yamlOutput, measurementPreset):
-    collection = yamlOutput.get(measurementPreset["collection"], [])
+def ExtractMeasurementStats(targetOutput, measurementPreset):
+    collection = targetOutput.get(measurementPreset["collection"], [])
     idField = measurementPreset["idField"]
     stats = {}
+
     for entry in collection:
         for field in measurementPreset["subFields"]:
             stats[f"{entry[idField]}:{field}"] = entry[field]
+
     return stats 
 
-def FormatStats(yamlOutput, preset, measurementPreset=None):
+def FormatStats(targetOutput, preset, measurementPreset=None):
     collectedStats = {}
     skipCollection = measurementPreset["collection"] if measurementPreset else None
 
-    for key in GetAllKeys(yamlOutput, skipCollection):
+    for key in GetAllKeys(targetOutput, skipCollection):
         collectedStats[key] = "static" if key in preset else ""
 
     if measurementPreset:
-        for statName in ExtractMeasurementStats(yamlOutput, measurementPreset):
+        for statName in ExtractMeasurementStats(targetOutput, measurementPreset):
             collectedStats[statName] = ""
 
     return collectedStats
@@ -45,6 +49,7 @@ def FindValue(data, targetKey, measurementPreset=None):
         for entry in data.get(measurementPreset["collection"], []):
             if entry.get(measurementPreset["idField"]) == idValue:
                 return entry.get(field)
+
         return None
 
     if isinstance(data, dict):
@@ -63,10 +68,9 @@ def FindValue(data, targetKey, measurementPreset=None):
                         found = FindValue(item, targetKey, measurementPreset)
                         if found is not None:
                             return found
-
     return None
 
-def FillStatArrays(statList, collectedStats, parsedData, run, labelCnt, isInitialized, measurementPreset=None):
+def FillStatArrays(statList, collectedStats, FORMAT, parsedData, run, labelCnt, isInitialized, measurementPreset=None):
     runIdx = run - 1
 
     for i, opt in enumerate(collectedStats):
@@ -75,11 +79,11 @@ def FillStatArrays(statList, collectedStats, parsedData, run, labelCnt, isInitia
             continue 
 
         if labelCnt:
-            valA = FindValue(parsedData.get("yamlA", {}), opt, measurementPreset)
-            valB = FindValue(parsedData.get("yamlB", {}), opt, measurementPreset)
+            valA = FindValue(parsedData.get(f"{FORMAT.name}A", {}), opt, measurementPreset)
+            valB = FindValue(parsedData.get(f"{FORMAT.name}B", {}), opt, measurementPreset)
             pairs = [(2 * i, valA), (2 * i + 1, valB)]
         else:
-            val = FindValue(parsedData.get("yaml", {}), opt, measurementPreset)
+            val = FindValue(parsedData.get(FORMAT.name, {}), opt, measurementPreset)
             pairs = [(i, val)]
 
         for idx, val in pairs:
@@ -94,12 +98,11 @@ def FillStatArrays(statList, collectedStats, parsedData, run, labelCnt, isInitia
 
     return True
 
-# TODO: - Algorithm can be made more efficient.
-# - Needs to sample both sides.
-def FillStats(preset, measurementPreset, runs, matrixName, labels, labelCnt):
-    checkParsedStats = Selector([FORMATS.yaml], 1, matrixName, labels)
+# TODO: Algorithm can be made more efficient.
+def FillStats(preset, measurementPreset, FORMAT, runs, matrixName, labels, labelCnt, custom=None):
+    checkParsedStats = Selector([FORMAT], 1, matrixName, labels, custom)
     checkParsedData = checkParsedStats.get("data", {})
-    checkData = checkParsedData["yamlA"] if labelCnt else checkParsedData["yaml"]
+    checkData = checkParsedData[f"{FORMAT.name}A"] if labelCnt else checkParsedData[FORMAT.name]
 
     collectedStats = FormatStats(checkData, preset, measurementPreset)
     statList = []
@@ -108,24 +111,26 @@ def FillStats(preset, measurementPreset, runs, matrixName, labels, labelCnt):
         isStatic = collectedStats[key] == "static"
         sample = FindValue(checkData, key, measurementPreset)
         isNumeric = isinstance(sample, (int, float))
+
         for _ in range(2 if labelCnt else 1):
             values = None if isStatic else (np.zeros(runs) if isNumeric else [])
             statList.append({"statName": key, "values": values})
+
     isInitialized = False
 
     for run in range(1, runs + 1):
-        parsedStats = Selector([FORMATS.yaml], run, matrixName, labels)
+        parsedStats = Selector([FORMATS(FORMAT)], run, matrixName, labels, custom)
         parsedData = parsedStats.get("data", {})
-        ran = FillStatArrays(statList, collectedStats, parsedData, run, labelCnt, isInitialized, measurementPreset)
+        ran = FillStatArrays(statList, collectedStats, FORMAT, parsedData, run, labelCnt, isInitialized, measurementPreset)
         isInitialized = ran
 
     return statList
 
 # This builds the stat value arrays.
-def Aggregate(runs, preset, matrixName, labels):
+def Aggregate(FORMAT, runs, preset, matrixName, labels, custom=None):
     staticPreset, measurementPreset = preset
     labelCnt = len(labels) > 1
-    statList = FillStats(staticPreset, measurementPreset, runs, matrixName, labels, labelCnt)
+    statList = FillStats(staticPreset, measurementPreset, FORMAT, runs, matrixName, labels, labelCnt, custom)
         
     allStats = {}
 
@@ -148,4 +153,5 @@ def Aggregate(runs, preset, matrixName, labels):
             "runs": runs,
             "stats": statList
         }
+
     return allStats
