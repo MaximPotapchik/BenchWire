@@ -3,32 +3,18 @@
 These are future plans for expansion of this project. In order of the current
 priorities.
 
+## Opcode sweep
+
+This is currently in V1 and support is being expanded. It only supports X86 
+right now. All memory setup required opcodes are skipped. V2 will seek to close
+this gap. 
+
 ## pyperf integration
 
 Adding support for pyperf, as the second supported benchmarker. It will be 
 integrated with this tool to develop the CI system, using it on itself. This
 will also open the door to json input analysis, since that is pyperf's output
 format. The json parsing in analysis can be reused for other benchmarkers.
-
-## Scheduling model analysis sweep
-
-llvm-exegesis already has `--mode=analysis` with
-`--analysis-clusters-output-file` and `--analysis-inconsistencies-output-file`,
-built to compare measured benchmarks against the TableGen scheduling
-model and flag where they disagree. There is also potential to completely bypass
-the analysis modes and use a custom opcode look up.
-
-This would involve a sweep across many opcodes in one invocation instead of by
-hand, and aggregating the inconsistency output into one report. 
-
-The example prerequisite components and features that need to be built for 
-this capability:
-
-- Html parsing.
-
-- Timed scheduling support for automation of multiple `targets:`.
-
-- State handling to prevent crashes from needing full restarts. 
 
 ## uops.info alternative
 
@@ -98,8 +84,8 @@ is a solid choice.
 
 ## More under consideration
  
-- `CI` | The goal is to have this tool be used as CI for itself. Benchmarking
-the benchmark automation.
+- `--ci` | The goal is to have this tool be used as CI for itself. Benchmarking
+the benchmark automation and analysis.
 
 - `Scheduler` | Automated periodic or event-triggered runs (nightly, or
 on every LLVM commit), feeding directly into the InfluxDB + build_sha
@@ -110,3 +96,6 @@ dashboard consumption without requiring a live InfluxDB instance.
 
 - `Enhanced analytics` | Expanding the python analysis with further
 statistical categories, calculations, and more.
+
+- `TUI` | Using https://github.com/charmbracelet/bubbletea to build a more
+interactive TUI. 

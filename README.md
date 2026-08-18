@@ -49,20 +49,14 @@ tables.
 
 </details>
 
-### Why?
+## Overview
 
-Currently there are no other LLVM-exegesis automation harnesses in open source.
-This project looks to allow seamless automation for benchmarking with Exegesis,
-and eventually beyond it.
-
-## What it does
-
-1. Runs `LLVM-exegesis` per `specMatrix`, solo or head-to-head, based
+1. Runs a benchmarker per `specMatrix`, solo or head-to-head, based
 on that matrix's `sequence`. A single `config.yaml` can define multiple
 independent comparisons in one batch.
 
-2. Supports four different run orderings (single, sequential, cycling, random
-interleaving) specifically to control for time-based bias like thermal
+2. Supports four different run methodologies (single, sequential, cycling,
+random interleaving) specifically to control for time-based bias like thermal
 drift and frequency scaling skewing numbers, see [`docs/methodology.md`](docs/methodology.md)
 for why this matters.
 
@@ -71,6 +65,45 @@ analysis on it.
 
 4. Produces a Catppuccin-themed plot and a markdown stats summary (mean, 
 median, stddev, CoV, percentiles up to P99.99 + more) for every run.
+
+## Features
+
+1. **YAML-driven config system.** Benchmark runs are declarative with default
+settings, flags, presets, and more. There are intuitive inheritance structures
+built-in.
+
+2. **Customization.** Every config can be edited with your own features.
+Various different combinations are possible, all modifiable by the user. For 
+more information, see [`docs/config.md`](docs/config.md).
+
+3. **Config generation.** Simply use `./BenchWire --buildConfig=` followed by
+the location of your desired preset. It will be filled with your specified 
+paths, and prompt you whether to run it immediately after, or not. Comes with a
+list of presets. See [`docs/presets.md`](docs/presets.md).
+
+4. **Opcode sweep generation.** Creating a config with a list of every opcode 
+`LLVM-exegesis` can run on your architecture is done using:
+`./BenchWire --buildConfig=sweep`. A text list of every opcode per bucket, is
+generated as well. It can run 3 different `LLVM-exegesis` modes back-to-back.
+More info in [`docs/cli.md`](docs/cli.md).
+
+5. **Full statistical aggregation.** Mean, median, standard deviation,
+variance, coefficient of variation, range, interquartile range, and
+percentiles. Computed across every run, for any measurement a preset
+tracks. Further statistical coverage will be implemented.
+
+6. **Markdown reporting.** Single-file, per-matrix, or per-run outputs. These 
+are automatically diffed when using comparison methodologies. Generated plots
+are embedded as well.
+
+7. **Plot generation.** Plots statistics using an automated plot generation API
+powered by Matplotlib. Plots are in a Catppuccin-Mocha theme.
+
+8. **Multi-benchmarker support.** Results can be read from yaml, json, or
+built entirely in memory. Wide reaching benchmarker support is the goal.
+
+9. **Noise Control.** Artificial jitter can be added via different ways.
+Both via randomization of cooldowns, and methodology.
 
 ## Requirements
 
@@ -89,8 +122,9 @@ chmod +x setup.sh
 
 For the full list of `config.yaml` settings, see [`docs/commands.md`](docs/commands.md).
 
-This will run the setup script, creating the `config.yaml` and populating it with
-`config.example.yaml`.
+This will run the setup script, creating the `config.yaml` and populating it
+with `config.example.yaml`.
+
 Edit `config.yaml` with your binary path(s), along with your desired 
 LLVM-exegesis flags, then run:
 
@@ -98,9 +132,12 @@ LLVM-exegesis flags, then run:
 ./benchwire
 ```
 
-Benchmarker results land in `results/yaml/` (raw exegesis output per run) and 
+Benchmarker results appear in `results/yaml/` (raw exegesis output per run) and 
 the analysis lands in the chosen directory (a plot + a markdown stats summary,
 timestamped). 
+
+You may also use `./benchwire --buildConfig=` with a preset to automatically
+create a config and use it.
 
 ## Comparison methodology
 
@@ -118,21 +155,16 @@ absorbed entirely into whichever side ran second.
 
 ## Docs
 
-- [`docs/commands.md`](docs/commands.md) | All of the commands currently available.
-- [`docs/methodology.md`](docs/methodology.md) | Why run ordering matters.
+- [`docs/cli.md`](docs/cli.md) | Every CLI option BenchWire uses.
+- [`docs/config.md`](docs/config.md) | Every `config.yaml` key, what it does.
 - [`docs/known-issues.md`](docs/known-issues.md) | Current gaps and rough edges.
+- [`docs/methodology.md`](docs/methodology.md) | Why run ordering matters.
+- [`docs/presets.md`](docs/presets.md) | Built-in presets, ready to run.
 - [`docs/roadmap.md`](docs/roadmap.md) | What's planned but not built yet.
-
-## Roadmap
-
-Actively extending this beyond a single-box benchmark runner: optional
-InfluxDB export (with git-SHA tagging), additional configuration utilities, and
-run progress/ETA instead of a wall of identical "run complete" lines. Details
-and reasoning in [`docs/roadmap.md`](docs/roadmap.md).
 
 ## In progress
 
-Support for pyperf is being implamented.
+Version 0.0.5 will include wider support in the opcode sweep.
 
 ## Contributing
 
