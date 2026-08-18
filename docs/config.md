@@ -1,14 +1,22 @@
-# Commands
+# Config
 
 Reference for every `config.yaml` key BenchWire reads. Each may have a sub-list of keys.
 This is the current list: 
 
-1. [Default](#default) | BenchWire settings that get applied by default, if specMatrix does not invoke them.
-2. [Global Flags](#global-flags) | Flags applied to every target, in every `specMatrix`.
-3. [Presets](#presets) | Reusable, named flag bundles, with one layer of inheritance.
-4. [Spec Matrix](#spec-matrix) | The actual benchmark definitions, one entry per comparison batch.
-5. [Matrix Sequence](#matrix-sequence) | Declared ordering of `specMatrix` entries.
-6. [Analysis](#analysis)| Where and how BenchWire's output gets written.
+1. [Context](#context) | Metadata about this config batch, currently name and mode.
+2. [Default](#default) | BenchWire settings that get applied by default, if specMatrix does not invoke them.
+3. [Global Flags](#global-flags) | Flags applied to every target, in every `specMatrix`.
+4. [Presets](#presets) | Reusable, named flag bundles, with one layer of inheritance.
+5. [Spec Matrix](#spec-matrix) | The actual benchmark definitions, one entry per comparison batch.
+6. [Matrix Sequence](#matrix-sequence) | Declared ordering of `specMatrix` entries.
+7. [Analysis](#analysis)| Where and how BenchWire's output gets written.
+
+## Context
+
+| Key | Meaning | Example |
+|---|---|---|
+| `name` | Identifies this config batch. | `name: "Sweep"` |
+| `mode` | Read by the resolver. Defaults to `"default"` if unset. | `mode: "default"` |
 
 ## Default
 
