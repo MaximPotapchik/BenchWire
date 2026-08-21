@@ -18,14 +18,14 @@ import (
 func main() {
 	scriptDir, err := os.Getwd()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "couldn't get working directory:", err)
+		fmt.Fprintln(os.Stderr, "[BenchWire] Error: couldn't get working directory:", err)
 		os.Exit(1)
 	}
 
 	outputDir := filepath.Join(scriptDir, "results", "yaml")
 
 	if err := os.MkdirAll(outputDir, 0o755); err != nil {
-		fmt.Fprintln(os.Stderr, "couldn't create output dir:", err)
+		fmt.Fprintln(os.Stderr, "[BenchWire] Error: couldn't create output dir:", err)
 		os.Exit(1)
 	}
 	
@@ -50,10 +50,12 @@ func main() {
 
 			case strings.HasPrefix(arg, "--buildConfig="):
 				loc := strings.TrimPrefix(arg, "--buildConfig=")
-				loc, err = builder.FindConfig(filepath.Join(scriptDir, "configs"), loc)
-				if err != nil {
-					fmt.Fprintln(os.Stderr, err)
-					os.Exit(1)
+				if loc != "sweep" {
+					loc, err = builder.FindConfig(filepath.Join(scriptDir, "configs"), loc)
+					if err != nil {
+						fmt.Fprintln(os.Stderr, err)
+						os.Exit(1)
+					}
 				}
 
 				configPath, configFile, err = builder.ConfigBuilder(loc, scriptDir)
@@ -66,14 +68,14 @@ func main() {
 				shouldRun := true
 
 				for {
-					fmt.Print("[BenchWire] Run config? Y/N ")
+					fmt.Print("[BenchWire] Run config? Y/N: ")
 					var yesNo string
 					if runConfig.Scan() {
 						yesNo = runConfig.Text()
 					}
 
 					if err := runConfig.Err(); err != nil {
-						fmt.Fprintln(os.Stderr, "[BenchWire] reading standard input: ", err)
+						fmt.Fprintln(os.Stderr, "[BenchWire] Error reading standard input: ", err)
 					}
 
 					switch yesNo {
@@ -127,7 +129,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	pyCmd := exec.Command("python3", filepath.Join(scriptDir, "analyze.py"), filepath.Join(configPath, configFile))
+	pyCmd := exec.Command("python3", filepath.Join(scriptDir, "analyze.py"),
+						  filepath.Join(configPath, configFile))
 	pyCmd.Stdout = os.Stdout
 	pyCmd.Stderr = os.Stderr
 
