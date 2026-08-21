@@ -40,4 +40,4 @@ analysis:
     dirName: ""
     storeIn: "single file"
     per: "run"
-
+    showErrored: true
