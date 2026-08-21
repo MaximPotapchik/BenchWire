@@ -28,8 +28,8 @@ class StatsResult:
         return self.GetStat(stat), other.GetStat(stat)
     
     def Diff(self, valueA, valueB):
-        denom = (valueA + valueB) / 2
-        return abs(valueB - valueA) / denom * 100 if denom else None
+        largerN = max(valueA, valueB)
+        return abs(valueB - valueA) / largerN * 100 if largerN else None
     
     def IsAllZero(self, stat):
         values = self.GetStat(stat)
@@ -63,6 +63,23 @@ class StatsResult:
     def InterquartileRange(self, stat):
         p75, p25 = self.P(stat, 75), self.P(stat, 25)
         return p75 - p25 if p75 is not None and p25 is not None else None
+
+    def TrimmedMean(self, stat, percentTrim):
+        sortedStat = np.sort(self.GetStat(stat))
+        percentTrim /= 100
+        k = int(len(sortedStat) * percentTrim)
+
+        trimmed = sortedStat[k:-k] if k > 0 else sortedStat
+        return np.mean(trimmed) if isinstance(trimmed, np.ndarray) else None
+    
+    def MedianAbsoluteDeviation(self, stat):
+        stats = self.GetStat(stat)
+        if not isinstance(stats, np.ndarray):
+            return None
+        
+        median = self.Median(stat)
+        diffs = np.abs(stats - median)
+        return np.median(diffs)
 
     # Percentiles/Ordering
     def P(self, stat, percent):
