@@ -39,7 +39,12 @@ def BuildMarkdownReport(stats, methodology, summary, targetCnt, trackedStats):
                 r.StartTable(True, True)
                 r.SetTableColumns("Metric", statsA.label, statsB.label)
                 for label, method, unit in summary:
-                    a, b = getattr(statsA, method)(val), getattr(statsB, method)(val)
+                    if isinstance(unit, int):
+                        a, b = getattr(statsA, method)(val, unit), getattr(statsB, method)(val, unit)
+                        unit = ""
+                    else:
+                        a, b = getattr(statsA, method)(val), getattr(statsB, method)(val)
+
                     r.AddTableRow(label, a, b, statsA.Diff(a, b), unit=unit)
 
                 r.AddLine("### Percentile Statistics")
@@ -78,7 +83,13 @@ def BuildMarkdownReport(stats, methodology, summary, targetCnt, trackedStats):
                 r.StartTable(False)
                 r.SetTableColumns("Metric", stats.label)
                 for label, method, unit in summary:
-                    r.AddTableRow(label, getattr(stats, method)(val), unit=unit)
+                    if isinstance(unit, int):
+                        value = getattr(stats, method)(val, unit)
+                        unit = ""
+                    else:
+                        value = getattr(stats, method)(val)
+
+                    r.AddTableRow(label, value, unit=unit)
 
                 r.AddLine("### Percentile statistics")
                 r.StartTable(False)
@@ -121,7 +132,13 @@ def BuildMeasurementSection(stats, val, summary):
     r.SetTableColumns("Metric", stats.label)
 
     for label, method, unit in summary:
-        r.AddTableRow(label, getattr(stats, method)(val), unit=unit)
+        if isinstance(unit, int):
+            value = getattr(stats, method)(val, unit)
+            unit = ""
+        else:
+            value = getattr(stats, method)(val)
+
+        r.AddTableRow(label, value, unit=unit)
 
     r.AddLine("### Percentile statistics")
     r.StartTable(False)
@@ -209,6 +226,8 @@ def ExegesisMarkdown(stats, fullArgs, targetCnt, outputDir, timestamp, plotFile,
         ("IQR", "InterquartileRange", ""),
         ("Min", "Min", ""),
         ("Max", "Max", ""),
+        ("Trimmed Mean (5%)", "TrimmedMean", 5),
+        ("Median Absolute Deviation", "MedianAbsoluteDeviation", ""),
     ]
     
     if targetCnt > 1:

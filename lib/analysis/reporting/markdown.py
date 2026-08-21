@@ -17,7 +17,7 @@ class MarkdownReporter(DocumentReporter):
             return f"{label}: {valueA:.4f}\n\n"
 
         higher = self.statsB.label if valueB > valueA else self.statsA.label
-        line = f"{label} | A: {valueA:.4f} B: {valueB:.4f}\n"
+        line = f"{label} | A: {valueA:.4f} B: {valueB:.4f} ↑\n"
 
         if diff is not None:
             line += f"{label} Difference: {diff:.4f}% ({higher} higher)\n"
@@ -45,6 +45,7 @@ class MarkdownReporter(DocumentReporter):
         columns = list(table["columns"])
         if table["showDiff"]:
             columns.append("Diff")
+
         header = "| " + " | ".join(columns) + " |\n"
         sep = "|" + "|".join(["---"] * len(columns)) + "|\n"
         body = ""
@@ -53,6 +54,7 @@ class MarkdownReporter(DocumentReporter):
             higher = self.statsB.label if valueB is not None and valueB > valueA else self.statsA.label
             body += self.RenderTableLine(label, valueA, valueB, diff, table["comparison"],
                                         table["showDiff"], unit, higher)
+
         return header + sep + body + "\n"
  
     def RenderTableLine(self, label, valueA, valueB, diff, comparison, showDiff, unit, higher=None):
@@ -69,9 +71,12 @@ class MarkdownReporter(DocumentReporter):
  
         if not comparison:
             return f"| {label} | {cell(valueA)} |\n"
+
         cells = [label, cell(valueA), cell(valueB)]
+
         if showDiff and diff is not None:
-            cells.append(f"{diff:.2f}% ({higher})")
+            cells.append(f"{diff:.2f}% ({higher} ↑)")
+
         return "| " + " | ".join(cells) + " |\n"
 
     def RenderLines(self, content):
