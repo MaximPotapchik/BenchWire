@@ -32,7 +32,8 @@ var outputPresets = map[string]OutputPreset{
 	},
 }
 
-func buildArgs(flags []string, preset OutputPreset, outputDir, matrixName, label, prefix string, run int) ([]string, string) {
+func buildArgs(flags []string, preset OutputPreset, outputDir, matrixName,
+			   label, prefix string, run int) ([]string, string) {
 	flagString := preset.BuildArg(outputDir, matrixName, label, prefix, run)
 	scheduled := append([]string{}, flags...)
 	scheduled = append(scheduled, flagString)
@@ -64,36 +65,76 @@ func WriteFailureYaml(outputPath string, errText string, opcode string) error {
 	return os.WriteFile(outputPath, []byte(content), 0644)
 }
 
-func SingularRun(progress *ProgressBar, runNumber int, outputPreset OutputPreset, outputDir, specMatrixName, binPath string, flags []string, label, prefix string, run int, cooldownTimer config.CooldownTimer) (int, error) {
+type RunContext struct {
+	OutputPreset   OutputPreset
+	OutputDir      string
+	SpecMatrixName string
+	BinPath        string
+	Flags          []string
+	Label          string
+	Prefix         string
+	CooldownTimer  config.CooldownTimer
+	TotalRuns      int
+}
+
+func checkError(outputPath string) bool {
+	data, err := os.ReadFile(outputPath)
+	if err != nil {
+		return false
+	}
+
+	for _, line := range strings.Split(string(data), "\n") {
+		if !strings.HasPrefix(line, "error:") {
+			continue
+		}
+		rest := strings.TrimSpace(line[len("error:"):])
+		return rest != "" && rest != "''"
+	}
+
+	return false
+}
+
+func SingularRun(progress *ProgressBar, runNumber int, ctx RunContext, run int) (int, bool, error) {
 	timerStart := GetTime()
-	args, outputPath := buildArgs(flags, outputPreset, outputDir, specMatrixName, label, prefix, run)
+	args, outputPath := buildArgs(ctx.Flags, ctx.OutputPreset, ctx.OutputDir, ctx.SpecMatrixName, ctx.Label, ctx.Prefix, run)
 	os.Remove(outputPath)
-	stderrText, execErr := execute(outputPreset.Execution, binPath, args)
+	stderrText, execErr := execute(ctx.OutputPreset.Execution, ctx.BinPath, args)
 
 	if _, statErr := os.Stat(outputPath); statErr != nil {
 		errMsg := stderrText
 		if errMsg == "" && execErr != nil {
 			errMsg = execErr.Error()
 		}
+
 		if errMsg == "" {
 			errMsg = "[BenchWire] No output produced, no error captured"
 		}
-		if writeErr := WriteFailureYaml(outputPath, errMsg, label); writeErr != nil {
-			return runNumber, writeErr
+
+		if writeErr := WriteFailureYaml(outputPath, errMsg, ctx.Label); writeErr != nil {
+			return runNumber, true, writeErr
+		}
+
+		if run == 1 && ctx.TotalRuns > 10 {
+			return runNumber, true, nil
+		}
+	} else if run == 1 && ctx.TotalRuns > 10 {
+		if checkError(outputPath) {
+			return runNumber, true, nil
 		}
 	}
 
 	timerEnd := GetTime()
-	cooldown, err := msleep(cooldownTimer)
+	cooldown, err := msleep(ctx.CooldownTimer)
 	if err != nil {
-		return runNumber, err
+		return runNumber, false, err
 	}
 
 	runNumber++
-	progress.Tick(runNumber, timerStart, timerEnd, cooldown, specMatrixName)
+	progress.Tick(runNumber, timerStart, timerEnd, cooldown, ctx.SpecMatrixName)
 
-	return runNumber, nil
+	return runNumber, false, nil
 }
+
 // TODO: - Default switch.
 // - Create a function for each loop.
 func Run(scheduled []scheduler.ScheduledMatrix, outputDir string) error {
@@ -133,45 +174,95 @@ func Run(scheduled []scheduler.ScheduledMatrix, outputDir string) error {
 			outputDir, _ = filepath.Split(outputDir)
 			outputDir = filepath.Join(outputDir, "json")
 		}
-
+		
+		var skip bool = false
 		for _, runTarget := range specMatrix.RunTargets{
+			var err error
+
+			if runTarget.Methodology == "single" {
+				ctx := RunContext{
+					OutputPreset: outputPreset, OutputDir: outputDir,
+					SpecMatrixName: specMatrix.SpecMatrixName, 
+					BinPath: runTarget.BinPath[0], Flags: runTarget.Flags[0],
+					Label: runTarget.Label[0], Prefix: "",
+					CooldownTimer: runTarget.CooldownTimer, TotalRuns: runTarget.Runs,
+				}
+
+				for i := 1; i <= runTarget.Runs; i++ {
+					runNumber, skip, err = SingularRun(&progress, runNumber, ctx, i)
+					if err != nil {
+						return err
+					}
+					
+					if skip {
+						runNumber += runTarget.Runs
+						skip = false
+						break
+					}
+				}
+				continue
+			}
+
+			ctxA := RunContext{
+				OutputPreset: outputPreset, OutputDir: outputDir,
+				SpecMatrixName: specMatrix.SpecMatrixName,
+				BinPath: runTarget.BinPath[0], Flags: runTarget.Flags[0],
+				Label: runTarget.Label[0], Prefix: "A",
+				CooldownTimer: runTarget.CooldownTimer, TotalRuns: runTarget.Runs,
+			}
+
+			ctxB := RunContext{
+				OutputPreset: outputPreset, OutputDir: outputDir,
+				SpecMatrixName: specMatrix.SpecMatrixName,
+				BinPath: runTarget.BinPath[1], Flags: runTarget.Flags[1],
+				Label: runTarget.Label[1], Prefix: "B",
+				CooldownTimer: runTarget.CooldownTimer, TotalRuns: runTarget.Runs,
+			}
+
 			switch runTarget.Methodology {
-				case "single":
-					var err error
-					for i := 1; i <= runTarget.Runs; i++ {
-						runNumber, err = SingularRun(&progress, runNumber, outputPreset, outputDir, specMatrix.SpecMatrixName, runTarget.BinPath[0], runTarget.Flags[0], runTarget.Label[0], "", i, runTarget.CooldownTimer)
-						if err != nil {
-							return err
-						}
-					}
-
 				case "sequential":
-					var err error
 					for i := 1; i <= runTarget.Runs; i++ {
-						runNumber, err = SingularRun(&progress, runNumber, outputPreset, outputDir, specMatrix.SpecMatrixName, runTarget.BinPath[0], runTarget.Flags[0], runTarget.Label[0], "A", i, runTarget.CooldownTimer)
+						runNumber, skip, err = SingularRun(&progress, runNumber, ctxA, i)
 						if err != nil {
 							return err
+						}
+
+						if skip {
+							runNumber += runTarget.Runs
+							skip = false
+							break
 						}
 					}
 
 					for i := 1; i <= runTarget.Runs; i++ {
-						runNumber, err = SingularRun(&progress, runNumber, outputPreset, outputDir, specMatrix.SpecMatrixName, runTarget.BinPath[1], runTarget.Flags[1], runTarget.Label[1], "B", i, runTarget.CooldownTimer)
+						runNumber, skip, err = SingularRun(&progress, runNumber, ctxB, i)
 						if err != nil {
 							return err
+						}
+
+						if skip {
+							runNumber += runTarget.Runs
+							skip = false
+							break
 						}
 					}
 
 				case "cycling":
-					var err error
 					for i := 1; i <= runTarget.Runs; i++ {
-						runNumber, err = SingularRun(&progress, runNumber, outputPreset, outputDir, specMatrix.SpecMatrixName, runTarget.BinPath[0], runTarget.Flags[0], runTarget.Label[0], "A", i, runTarget.CooldownTimer)
+						runNumber, skip, err = SingularRun(&progress, runNumber, ctxA, i)
 						if err != nil {
 							return err
 						}
 
-						runNumber, err = SingularRun(&progress, runNumber, outputPreset, outputDir, specMatrix.SpecMatrixName, runTarget.BinPath[1], runTarget.Flags[1], runTarget.Label[1], "B", i, runTarget.CooldownTimer)
+						runNumber, skip, err = SingularRun(&progress, runNumber, ctxB, i)
 						if err != nil {
 							return err
+						}
+
+						if skip {
+							runNumber += runTarget.Runs
+							skip = false
+							break
 						}
 					}
 
@@ -182,24 +273,28 @@ func Run(scheduled []scheduler.ScheduledMatrix, outputDir string) error {
 					}
 					rand.Shuffle(len(order), func(i, j int) { order[i], order[j] = order[j], order[i] })
 
-					var err error
 					countA, countB := 1, 1
-
 					for _, side := range order {
 						if side == 'A' {
-							runNumber, err = SingularRun(&progress, runNumber, outputPreset, outputDir, specMatrix.SpecMatrixName, runTarget.BinPath[0], runTarget.Flags[0], runTarget.Label[0], "A", countA, runTarget.CooldownTimer)
+							runNumber, skip, err = SingularRun(&progress, runNumber, ctxA, countA)
 							countA++
 						} else {
-							runNumber, err = SingularRun(&progress, runNumber, outputPreset, outputDir, specMatrix.SpecMatrixName, runTarget.BinPath[1], runTarget.Flags[1], runTarget.Label[1], "B", countB, runTarget.CooldownTimer)
+							runNumber, skip, err = SingularRun(&progress, runNumber, ctxB, countB)
 							countB++
 						}
 
 						if err != nil {
 							return err
 						}
+
+						if skip {
+							runNumber+= runTarget.Runs
+							skip = false
+							break
+						}
 					}
 				}
-			}
+			}	
 	}
 	fmt.Printf("\n[BenchWire] total: %.2fs\n", float64(GetTotalTimeSpent(progress))/1e9)
 	return nil
