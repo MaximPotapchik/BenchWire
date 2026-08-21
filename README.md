@@ -164,17 +164,15 @@ absorbed entirely into whichever side ran second.
 
 ## In progress
 
-Version 0.0.5 will include wider support in the opcode sweep.
+Version 0.0.6 will include wider support in the opcode sweep.
 
 ## Contributing
 
-Still a solo project shaping its own direction, not asking for broad
-review yet, but real help is genuinely welcome. `docs/known-issues.md`
-is the honest list of what's actually broken right now, start there.
+If you would like to contribute, look at `docs/known-issues.md`. If you have
+experience with Golang and/or Python, your feedback/help would be appreciated. 
+Open an issue before PRing.
 
-Compiler/LLVM background is especially useful for anything touching
-exegesis internals or PMU quirks across vendors. A background in said 
-area is not necessary. Open an issue before a nontrivial PR.
+Compiler/LLVM background is helpful but not necessary.
 
 ## License
 
