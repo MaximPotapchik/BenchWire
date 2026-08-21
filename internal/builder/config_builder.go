@@ -77,7 +77,7 @@ func ConfigBuilder(configLoc string, scriptDir string) (string, string, error) {
 	file := filepath.Base(configLoc)
 
 	if file == "sweep" {
-		dir, _ = BuildSweep(scriptDir, "latency")
+		dir, _ = BuildSweep(scriptDir)
 		file += ".yaml"
 		return dir, file, nil
 	}
