@@ -25,6 +25,7 @@ analysis:
     dirName: "sweep"
     storeIn: "single file"
     per: "suite"
+    showErrored: true
     plots:
       disable: true
-
+    
