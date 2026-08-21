@@ -47,6 +47,7 @@ type OpcodeInfo struct {
 	Name string
 	Skipped bool
 	Encoding uint64
+	TSFlag uint64
 }
 
 // Finds every opcode whose source .td is skipped.
@@ -141,13 +142,15 @@ func parseRow(line string, sourcedNames map[string]bool, skipFlags []string) (in
 	}
 
 	var encoding uint64
+	var tsflag uint64
 	if tm := TSFlagsHex.FindStringSubmatch(line); tm != nil {
 		if val, err := strconv.ParseUint(tm[1], 16, 64); err == nil {
+			tsflag = val
 			encoding = val & EncodingMask
 		}
 	}
 
-	return OpcodeInfo{ Name: name, Skipped: skipped, Encoding: encoding }, true
+	return OpcodeInfo{ Name: name, Skipped: skipped, Encoding: encoding, TSFlag: tsflag }, true
 }
 
 // Reads the opcode flags and appends the ones we want.
@@ -182,10 +185,12 @@ func ExtractBucketOne(incPath string) ([]OpcodeInfo, error) {
 			results = append(results, info)
 		}
 	}
+
 	return results, nil
 }
 
-// Checks if the X86 CPU is AVX-512 compatible.
+// Checks if the X86 CPU is AVX-512 compatible. Also checks if an instruction is pseudo via
+// TSFlag hex.
 func FilterBucketOne(info []OpcodeInfo) []string {
 	var opcodes []string
 
@@ -195,6 +200,12 @@ func FilterBucketOne(info []OpcodeInfo) []string {
 		}
 
 		if r.Encoding == EncodingEVEX && !cpu.X86.HasAVX512F {
+			continue
+		}
+
+		// Filters pseudo instructions that make it past the other skipped flags.
+		if r.TSFlag == 0xc00000 || r.TSFlag == 0x1800000 || r.TSFlag == 0x1400000 ||
+		   r.TSFlag == 0x400000 || r.TSFlag == 0x800000 {
 			continue
 		}
 
@@ -228,28 +239,28 @@ func MakeBucketOne(incPath string, sweepDir string) ([]string, string, error) {
 }
 
 // TODO: BucketTwo
-func CreateSweepConfig(modeSelect []string, sweepDir string, binPath string, bucktOne []string) {
+func CreateSweepConfig(modeSelect []string, sweepDir string, binPath string, buckets ...[]string) {
 	presetFile := "sweepPreset.yaml"
 	cfg, err := config.LoadYamlConfig(sweepDir, presetFile) 
 	if err != nil {
         fmt.Fprintf(os.Stderr, "[BenchWire] Failed to load YAML config: %v\n", err)
+		return
     }
 
-	fmt.Print(modeSelect[0])
-	for _, mode := range modeSelect {
-		for _, opcode := range bucktOne {
-			opcodeFlag := "--opcode-name=" + opcode
-			target := config.Target {
-				Label: opcode + " " + mode,
-				BinPath: binPath,
-				Preset: []string{mode},
-				Flags: []string{opcodeFlag},
-			}
-			cfg.SpecMatrix[0].Targets = append(cfg.SpecMatrix[0].Targets, target)
-			cfg.SpecMatrix[0].Sequence = append(cfg.SpecMatrix[0].Sequence, []string{opcode + " " + mode})
-		}
+	for i, bucket := range buckets {
+        for _, opcode := range bucket {
+            opcodeFlag := "--opcode-name=" + opcode
+            target := config.Target {
+                Label: opcode + " " + modeSelect[i],
+                BinPath: binPath,
+                Preset: []string{modeSelect[i]},
+                Flags: []string{opcodeFlag},
+            }
+            cfg.SpecMatrix[0].Targets = append(cfg.SpecMatrix[0].Targets, target)
+            cfg.SpecMatrix[0].Sequence = append(cfg.SpecMatrix[0].Sequence, []string{opcode + " " + modeSelect[i]})
+        }
 	}
-	
+
 	builtSweep, _ := yaml.Marshal(&cfg)
 	sweepFile := filepath.Join(sweepDir, "sweep.yaml")
 	err = os.WriteFile(sweepFile, builtSweep, 0644)
@@ -258,7 +269,7 @@ func CreateSweepConfig(modeSelect []string, sweepDir string, binPath string, buc
 	}	
 }
 
-func BuildSweep(configDir string, mode string) (string, error) {
+func BuildSweep(configDir string) (string, error) {
 	var incPath string
 	fmt.Print("[BenchWire] Enter your build/lib/Target/X86/X86GenInstrInfo.inc location: ")
 	fmt.Scanln(&incPath)
@@ -273,23 +284,42 @@ func BuildSweep(configDir string, mode string) (string, error) {
 	fmt.Scanln(&modeSelect)
 
 	sweepDir := filepath.Join(configDir, "configs", "sweep")
+	bucket := make([][]string, 3)
+
 	bucketOne, _, err := MakeBucketOne(incPath, sweepDir)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "[BenchWire] Failed to extract bucket one:", err)
+		fmt.Fprintln(os.Stderr, "[BenchWire] failed to extract bucket one:", err)
 		return "", err
 	}
+	bucket[0] = bucketOne
+
+	bucketTwo, _, err := MakeBucketTwo(incPath, sweepDir) 
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "[BenchWire] failed to extract bucket two:", err)
+		return "", err
+	}
+	bucket[1] = bucketTwo
+
+	bucketThree, _, err := MakeBucketThree(incPath, sweepDir)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "[BenchWire] failed to extract bucket three:", err)
+		return "", err
+	}
+	bucket[2] = bucketThree
 
 	switch modeSelect {
 		case "latency":
-			CreateSweepConfig([]string{"Lat"}, sweepDir, binpath, bucketOne)
+			CreateSweepConfig([]string{"Lat"}, sweepDir, binpath, bucket[0])
 		case "uops":
-			CreateSweepConfig([]string{"Uop"}, sweepDir, binpath, bucketOne)
+			CreateSweepConfig([]string{"Uop"}, sweepDir, binpath, bucket[1])
 		case "inverse_throughput":
-			CreateSweepConfig([]string{"Thru"}, sweepDir, binpath, bucketOne)
+			CreateSweepConfig([]string{"Thru"}, sweepDir, binpath, bucket[2])
 		case "full":
-			fmt.Print("Hit")
-			CreateSweepConfig([]string{"Lat", "Uop", "Thru"}, sweepDir, binpath, bucketOne)
+			CreateSweepConfig([]string{"Lat", "Uop", "Thru"}, sweepDir, binpath, bucket...)
 	}
+
+	fmt.Println("[BenchWire] You can modify your sweep config in /configs/sweep/sweep.yaml.")
+	fmt.Println("[BenchWire] If you would like to remove errored llvm-exegesis runs, flip showErrored to false.")
 
 	return sweepDir, nil
 }

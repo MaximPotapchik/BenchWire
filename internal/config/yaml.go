@@ -133,6 +133,7 @@ type AnalysisOutput struct {
 	DirName string `yaml:"dirName"`
 	StoreIn string `yaml:"storeIn"`
 	Per string `yaml:"per"`
+	ShowErrored bool `yaml:"showErrored"`
 	Plots Plots `yaml:"plots"`
 }
 
