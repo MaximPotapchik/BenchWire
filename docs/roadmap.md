@@ -5,9 +5,13 @@ priorities.
 
 ## Opcode sweep
 
-This is currently in V1 and support is being expanded. It only supports X86 
-right now. All memory setup required opcodes are skipped. V2 will seek to close
-this gap. 
+This is currently in V2 and support is being expanded. It only supports X86 
+right now. A mechanism for different architectures needs to be introduced to 
+prompt for the users architecture InstrInfo.inc with cpuid of some sort. Next,
+we also need a way to grep/read the users architecture and go through the 
+scheduling model for it. Each measured opcode can be correlated to it's 
+described port mappings, so that we can know instantly whether it is correct or 
+not.
 
 ## pyperf integration
 

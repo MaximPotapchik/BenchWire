@@ -112,7 +112,8 @@ Controls where reports get written.
 |---|---|---|
 | `dirName` | Optional. If set, reports go in `results/{dirName}/` instead of the default location. | `dirName: "reports"` |
 | `storeIn` | `"directory"` or `"single file"`. | `storeIn: "directory"` |
-| `per` | `"suite"`, `"specMatrix"`, or `"run"`. **Ignored entirely if `storeIn` is `"single file"`.** | `per: "specMatrix"` |
+| `per` | How you'd like to target storeIn. `"suite"`, `"specMatrix"`, or `"run"`. **Ignored entirely if `storeIn` is `"single file"`.** | `per: "specMatrix"` |
+| `plots` | Options for plots. See [Plots](#plots).  Expansion of customization options will be built. | see below |
 
 `per` decides grouping when `storeIn: "directory"`:
 - `"suite"` | Every `specMatrix` in the whole run combines into one report, in one `batch_{timestamp}/` folder.
@@ -125,6 +126,12 @@ what `per` says.
 
 Neither `storeIn` nor `per` currently has a default, both are required
 keys. You will get an error otherwise.
+
+### Plots
+
+| Key | Meaning | Example |
+|---|---|---|
+| `disable` | disables plotting when set to true | `disable: false` |
 
 ## Flag assembly order
 
