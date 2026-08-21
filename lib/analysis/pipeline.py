@@ -9,10 +9,17 @@ from .presets.llvm_exegesis.markdown import ExegesisMarkdown
 from .presets.llvm_exegesis.plots import ExegesisPlot
 from .presets.llvm_exegesis.statpreset import GetStaticStats, GetMeasurementPreset
 
-# These can be seperated from pipeline in the future if this gets too large.
-def ExegesisPipe(specMatrix, plotDir, timestamp, itr, combine, outputPer, lastMatrix, disablePlots=False):
+def hasError(stats):
+    try:
+        return bool(stats.GetStat("error")[0])
+    except (KeyError, IndexError, TypeError, AttributeError):
+        return False
 
-    # TODO: If checks per setting can turn into a function to reduce boilerplate here.
+# These can be seperated from pipeline in the future if this gets too large.
+def ExegesisPipe(specMatrix, plotDir, timestamp, itr, combine, lastMatrix, opts):
+
+    outputPer = opts["outputPer"]
+
     if outputPer == "single":
         if combine is None:
             combine = MarkdownReporter(None)
@@ -39,12 +46,22 @@ def ExegesisPipe(specMatrix, plotDir, timestamp, itr, combine, outputPer, lastMa
 
         if targetCnt > 1:
             statsA, statsB = StatsResult.FromAggregate(aggregated)
-            plot = None if disablePlots else ExegesisPlot([statsA, statsB], specMatrix, targetCnt, plotDir, [n, timestamp])
+            errored = hasError(statsA) or hasError(statsB)
+            if errored and not opts["showErrored"]:
+                itr += 1
+                continue
+
+            plot = None if opts["disablePlots"] else ExegesisPlot([statsA, statsB], specMatrix, targetCnt, plotDir, [n, timestamp])
             ExegesisMarkdown([statsA, statsB], specMatrix, targetCnt, plotDir, [n, timestamp], plot, combine=combine, finalized=finalized)
 
         else:
             stats = StatsResult.FromAggregate(aggregated)
-            plot = None if disablePlots else ExegesisPlot(stats, specMatrix, targetCnt, plotDir, [n, timestamp])
+            errored = hasError(stats)
+            if errored and not opts["showErrored"]:
+                itr += 1
+                continue
+
+            plot = None if opts["disablePlots"] else ExegesisPlot(stats, specMatrix, targetCnt, plotDir, [n, timestamp])
             ExegesisMarkdown(stats, specMatrix, targetCnt, plotDir, [n, timestamp], plot, combine=combine, finalized=finalized)
             
 
@@ -75,11 +92,15 @@ def Pipeline(fullArgs, outputLocation):
         resultLocation = os.path.join(resultLocation, "single_files")
         os.makedirs(resultLocation, exist_ok=True)
    
-    disablePlots = True if analysisOpts["output"]["plots"]["disable"] else False
-
     storeIn, per = analysisOpts["output"]["storeIn"], analysisOpts["output"]["per"]
     # TODO: May need to chenge this. Collides with methodology single.
     outputPer = "single" if (storeIn == "single file" or per == "suite") else ("perMatrix" if per == "specMatrix" else "perRun")
+    
+    opts = {
+        "outputPer": outputPer,
+        "disablePlots": True if analysisOpts["output"]["plots"]["disable"] else False,
+        "showErrored": analysisOpts["output"].get("showErrored", True),
+    }
 
     runN = 0
     combine = None
@@ -96,7 +117,7 @@ def Pipeline(fullArgs, outputLocation):
                 os.makedirs(saveLocation, exist_ok=True)
 
             isLastMatrix = (idx == len(specMatrices) - 1)
-            runN, combine = ExegesisPipe(specMatrix, saveLocation, timestamp, runN, combine, outputPer, isLastMatrix, disablePlots)
+            runN, combine = ExegesisPipe(specMatrix, saveLocation, timestamp, runN, combine, isLastMatrix, opts)
 
     analysisTimeEnd = time.perf_counter()
 
