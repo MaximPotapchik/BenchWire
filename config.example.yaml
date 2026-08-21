@@ -47,7 +47,7 @@ specMatrix:
       # - [build1, build2]
 
 # If you'd like a second specMatrix in the same run, uncomment this block
-# and add its name to matrixSequence below. See docs/commands.md.
+# and add its name to matrixSequence below. See docs/config.md.
 #  - name: "VEXFull"
 #    benchmarker: "llvm-exegesis"
 #    methodology: "random interleaving"
@@ -86,3 +86,4 @@ analysis:
   # dirName: "reports" # Can be empty. Overrides defaulting naming scheme.
     layout: "directory" # Or "single file"
     per: "suite" # Or "specMatrix" or "run"
+    showErrored: true
